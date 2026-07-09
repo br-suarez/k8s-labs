@@ -13,9 +13,9 @@ Hands-on Kubernetes lab portfolio, built during a private course based on [KubeL
 
 | # | Module | Status | Notes |
 |---|--------|--------|-------|
-| 01 | Kind Installation | ✅ Complete | Cluster set up with Kind, troubleshooting inotify limits |
+| 01 | [Kind Installation](./01-installation/README.md) | ✅ Complete | Cluster set up with Kind, troubleshooting inotify limits |
 | 02 | Remote Connection (optional, MicroK8s only) | ⬜ N/A | Not applicable, using Kind |
-| 03 | First Steps — building a Pod | ⬜ Pending | |
+| 03 | [First Steps — building a Pod](./03-first-steps-pod/README.md) | ✅ Complete | Pod lifecycle, port-forward, local port conflict troubleshooting |
 | 04 | ReplicaSets (optional) | ⬜ Pending | |
 | 05 | Deployments | ⬜ Pending | |
 | 06 | DaemonSet | ⬜ Pending | |

@@ -37,7 +37,10 @@ docker ps
 ## Issue encountered
 
 On the first attempt to create the cluster, `kubeadm init` failed during the `wait-control-plane` phase:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 111d1969c99f1dae973ba5a94c5cd6cf0478731f
 [api-check] The API server is not healthy after 4m29.68757993s
 Unfortunately, an error has occurred:
 context deadline exceeded
@@ -72,7 +75,10 @@ kind create cluster --name k8s-portfolio
 ```
 
 Result: cluster created successfully, node in `Ready` state.
+<<<<<<< HEAD
 
+=======
+>>>>>>> 111d1969c99f1dae973ba5a94c5cd6cf0478731f
 NAME                          STATUS   ROLES           AGE    VERSION
 k8s-portfolio-control-plane   Ready    control-plane   2m4s   v1.30.0
 
