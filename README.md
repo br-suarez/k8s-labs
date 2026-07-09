@@ -1,6 +1,6 @@
 # Kubernetes Labs — Bryan M. Suarez
 
-Hands-on Kubernetes lab portfolio, built during a private course based on [KubeLabs](https://github.com/cachac/kubelabs) (Carlos Chacón Calvo) + professional experience at Equifax.
+Hands-on Kubernetes lab portfolio, built during a private course based on [KubeLabs](https://github.com/cachac/kubelabs).
 
 **Goal:** demonstrate practical competency in Kubernetes cluster administration for DevOps/SRE roles (Upwork, Fiverr, remote contracts).
 
