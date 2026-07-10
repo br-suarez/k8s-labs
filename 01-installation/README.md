@@ -72,10 +72,6 @@ kind create cluster --name k8s-portfolio
 ```
 
 Result: cluster created successfully, node in `Ready` state.
-<<<<<<< HEAD
-
-=======
->>>>>>> 111d1969c99f1dae973ba5a94c5cd6cf0478731f
 NAME                          STATUS   ROLES           AGE    VERSION
 k8s-portfolio-control-plane   Ready    control-plane   2m4s   v1.30.0
 
