@@ -1,6 +1,3 @@
-Aquí tienes el README del Módulo 06 listo para pegar:
-markdown# Lab 06: DaemonSet
-
 **Module:** 06 - DaemonSet
 **Date:** 2026-07-09
 
