@@ -18,7 +18,7 @@ Hands-on Kubernetes lab portfolio, built during a private course based on [KubeL
 | 03 | [First Steps — building a Pod](./03-first-steps-pod/README.md) | ✅ Complete | Pod lifecycle, port-forward, local port conflict troubleshooting |
 | 04 | [ReplicaSets](./04-replicasets/README.md) | ✅ Complete | Pod adoption via label collision, self-healing test |
 | 05 | [Deployments](./05-deployments/README.md) | ✅ Complete | Rolling update, rollback, deprecated --record flag |
-| 06 | DaemonSet | ⬜ Pending | |
+| 06 | [DaemonSet](./06-daemonset/README.md) | ✅ Complete | One-pod-per-node, scale subresource not supported, self-healing |
 | 07 | Quick CLI commands | ⬜ Pending | |
 | 08 | Namespaces | ⬜ Pending | |
 | 09 | Practice | ⬜ Pending | |
