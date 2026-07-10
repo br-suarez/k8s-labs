@@ -17,7 +17,7 @@ Hands-on Kubernetes lab portfolio, built during a private course based on [KubeL
 | 02 | Remote Connection (optional, MicroK8s only) | ⬜ N/A | Not applicable, using Kind |
 | 03 | [First Steps — building a Pod](./03-first-steps-pod/README.md) | ✅ Complete | Pod lifecycle, port-forward, local port conflict troubleshooting |
 | 04 | [ReplicaSets](./04-replicasets/README.md) | ✅ Complete | Pod adoption via label collision, self-healing test |
-| 05 | Deployments | ⬜ Pending | |
+| 05 | [Deployments](./05-deployments/README.md) | ✅ Complete | Rolling update, rollback, deprecated --record flag |
 | 06 | DaemonSet | ⬜ Pending | |
 | 07 | Quick CLI commands | ⬜ Pending | |
 | 08 | Namespaces | ⬜ Pending | |
