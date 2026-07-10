@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-monitor
+  labels:
+    app: node-monitor-demo
+spec:
+  selector:
+    matchLabels:
+      app: node-monitor-demo
+  template:
+    metadata:
+      labels:
+        app: node-monitor-demo
+    spec:
+      containers:
+        - name: node-monitor
+          image: nginx:1.26
+          ports:
+            - containerPort: 80
