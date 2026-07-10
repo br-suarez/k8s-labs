@@ -19,7 +19,7 @@ Hands-on Kubernetes lab portfolio, built during a private course based on [KubeL
 | 04 | [ReplicaSets](./04-replicasets/README.md) | ✅ Complete | Pod adoption via label collision, self-healing test |
 | 05 | [Deployments](./05-deployments/README.md) | ✅ Complete | Rolling update, rollback, deprecated --record flag |
 | 06 | [DaemonSet](./06-daemonset/README.md) | ✅ Complete | One-pod-per-node, scale subresource not supported, self-healing |
-| 07 | Quick CLI commands | ⬜ Pending | |
+| 07 | [Quick CLI Commands](./07-cli-commands/README.md) | ✅ Complete | metrics-server install/patch, scale, contexts, events |
 | 08 | Namespaces | ⬜ Pending | |
 | 09 | Practice | ⬜ Pending | |
 | 10 | Quotas and Limits | ⬜ Pending | |
