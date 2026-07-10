@@ -76,6 +76,7 @@ Result: cluster created successfully, node in `Ready` state.
 NAME                          STATUS   ROLES           AGE    VERSION
 k8s-portfolio-control-plane   Ready    control-plane   2m4s   v1.30.0
 ```
+
 ## What I learned
 
 - `kubeadm init` errors in Kind aren't always what the log suggests at first glance (it said "cgroups", the real issue was inotify) — it's worth checking host kernel limits before assuming a cluster configuration problem.
