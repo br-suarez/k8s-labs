@@ -20,9 +20,9 @@ Hands-on Kubernetes lab portfolio, built during a private course based on [KubeL
 | 05 | [Deployments](./05-deployments/README.md) | ✅ Complete | Rolling update, rollback, deprecated --record flag |
 | 06 | [DaemonSet](./06-daemonset/README.md) | ✅ Complete | One-pod-per-node, scale subresource not supported, self-healing |
 | 07 | [Quick CLI Commands](./07-cli-commands/README.md) | ✅ Complete | metrics-server install/patch, scale, contexts, events |
-| 08 | Namespaces | ⬜ Pending | |
-| 09 | Practice | ⬜ Pending | |
-| 10 | Quotas and Limits | ⬜ Pending | |
+| 08 | [Namespaces](./08-namespaces/README.md) | ✅ Complete | Resource isolation, quota inspection, cluster restart recovery |
+| 09 | [Practice](./09-practice/README.md) | ✅ Complete | Resource requests/limits, scaling events, control plane restart diagnosis |
+| 10 | [Quotas and Limits](./10-quotas-limits/README.md) | ✅ Complete | ResourceQuota enforcement, LimitRange defaults, quota rejection captured |
 | 11 | Apps (optional) | ⬜ Pending | |
 | 12 | Services | ⬜ Pending | |
 | 13 | Storage | ⬜ Pending | |
