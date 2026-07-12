@@ -23,8 +23,8 @@ Hands-on Kubernetes lab portfolio, built during a private course based on [KubeL
 | 08 | [Namespaces](./08-namespaces/README.md) | ✅ Complete | Resource isolation, quota inspection, cluster restart recovery |
 | 09 | [Practice](./09-practice/README.md) | ✅ Complete | Resource requests/limits, scaling events, control plane restart diagnosis |
 | 10 | [Quotas and Limits](./10-quotas-limits/README.md) | ✅ Complete | ResourceQuota enforcement, LimitRange defaults, quota rejection captured |
-| 11 | Apps (optional) | ⬜ Pending | |
-| 12 | Services | ⬜ Pending | |
+| 11 | [Apps](./11-apps/README.md) | ✅ Complete | ConfigMaps, Secrets, base64 vs encryption, last-applied-configuration leak |
+| 12 | [Services](./12-services/README.md) | ✅ Complete | ClusterIP, DNS resolution via CoreDNS, quota headroom during debugging |
 | 13 | Storage | ⬜ Pending | |
 | 14 | Networking | ⬜ Pending | |
 | 14a | Practice 2 | ⬜ Pending | |

@@ -1,0 +1,35 @@
+# deployment-with-config.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: practice-web-configured
+  namespace: practice-app
+  labels:
+    app: practice-web-configured
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: practice-web-configured
+  template:
+    metadata:
+      labels:
+        app: practice-web-configured
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.26
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: practice-app-config
+            - secretRef:
+                name: practice-app-secret
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"

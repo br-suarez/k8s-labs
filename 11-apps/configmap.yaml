@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: practice-app-config
+  namespace: practice-app
+data:
+  APP_ENV: "practice"
+  APP_GREETING: "Hello from the portfolio cluster"
