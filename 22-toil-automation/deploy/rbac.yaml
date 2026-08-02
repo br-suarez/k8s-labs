@@ -1,0 +1,46 @@
+# Read-only access for the triage runner.
+#
+# A tool that runs unattended when an alert fires must not be able to change
+# anything. Diagnosis is read-only by definition; auto-remediation is a
+# different decision with a different risk profile, and giving a webhook
+# receiver write access "in case we want that later" is how a bad payload turns
+# an incident into an outage.
+#
+# Verbs are get/list/watch only. No create, no delete, no patch.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: triage-runner
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: triage-runner
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "events", "services"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets", "deployments", "statefulsets"]
+    verbs: ["get", "list"]
+  - apiGroups: ["argoproj.io"]
+    resources: ["rollouts", "analysisruns"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: triage-runner
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: triage-runner
+subjects:
+  - kind: ServiceAccount
+    name: triage-runner
+    namespace: monitoring

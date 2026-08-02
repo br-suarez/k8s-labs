@@ -1,0 +1,40 @@
+    (SLO error budget is 0.5%; fast-burn page threshold is 7.2%)
+
+== 2. SCOPE — one pod or all of them?
+  error ratio per pod (1m):
+    slo-demo-6c776466f4-ll5hq  1
+    slo-demo-6c776466f4-9zxzf  1
+    slo-demo-6c776466f4-666m6  1
+
+  → all pods similar  = systemic (bad deploy, dependency, config)
+  → one pod an outlier = that pod (kubectl delete pod, then investigate)
+
+== 3. ERROR BUDGET — roll back, or fix forward?
+    budget remaining (6h proxy): -11.416670403396068
+    burn rate (1h):              20.53x
+    ⚠ BUDGET BELOW 25% — policy says stop shipping and roll back.
+
+== 4. DID SOMETHING JUST SHIP?
+  ReplicaSets by age (newest first):
+    NAME                  DESIRED   READY    AGE
+    slo-demo-6c776466f4   3         3        2026-08-02T03:15:16Z
+    loadgen-5d67c9dbd4    0         <none>   2026-08-02T03:20:32Z
+    loadgen-765f786747    4         4        2026-08-02T03:21:33Z
+
+  Argo Rollouts revisions (if managed by a Rollout):
+    NAME   PHASE   IMAGE
+
+== 5. POD HEALTH & RESTARTS
+    NAME                        READY   RESTARTS   NODE              IMAGE
+    slo-demo-6c776466f4-666m6   true    0          slo-lab-worker    slo-demo:v1
+    slo-demo-6c776466f4-9zxzf   true    0          slo-lab-worker2   slo-demo:v1
+    slo-demo-6c776466f4-ll5hq   true    0          slo-lab-worker2   slo-demo:v1
+
+== 6. RECENT WARNING EVENTS
+
+== 7. RECENT LOGS FROM ONE POD
+    pod: slo-demo-6c776466f4-666m6
+------------------------------------------------------------------
+ END OF TRIAGE
+------------------------------------------------------------------
+
