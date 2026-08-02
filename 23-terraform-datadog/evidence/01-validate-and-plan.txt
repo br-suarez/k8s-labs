@@ -1,0 +1,158 @@
+======================================================================
+ TERRAFORM + DATADOG — validate and plan (no apply, no account)
+ date: 2026-08-02T06:55:20Z
+======================================================================
+
+========== init ==========
+
+$ terraform init -no-color
+Initializing the backend...
+
+Initializing provider plugins...
+- Finding datadog/datadog versions matching "~> 3.50"...
+- Installing datadog/datadog v3.91.0...
+- Installed datadog/datadog v3.91.0 (signed by a HashiCorp partner, key ID 00A128F57B9D6229)
+Partner and community providers are signed by their developers.
+If you'd like to know more about provider signing, you can read about it here:
+https://developer.hashicorp.com/terraform/cli/plugins/signing
+
+Terraform has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+
+========== fmt — formatting is not a review conversation ==========
+
+$ terraform fmt -check -recursive -no-color
+
+========== validate — types, references, required arguments ==========
+
+$ terraform validate -no-color
+Success! The configuration is valid.
+
+
+========== plan — the full set of resources this would create ==========
+
+$ sh -c terraform plan -no-color -out=tfplan 2>&1 | tail -40
+            
+            A THRESHOLD RATIO, not a percentile. Percentiles cannot be averaged across
+            hosts or re-windowed without producing a number that is confidently wrong;
+            a ratio of counts can.
+        EOT
+      + id                = (known after apply)
+      + name              = "checkout-api — latency"
+      + tags              = [
+          + "env:production",
+          + "managed-by:terraform",
+          + "service:checkout-api",
+          + "team:sre",
+        ]
+      + target_threshold  = (known after apply)
+      + timeframe         = (known after apply)
+      + type              = "metric"
+      + warning_threshold = (known after apply)
+
+      + query {
+          + denominator = "sum:trace.http.request.duration.by_type{service:checkout-api,env:production}"
+          + numerator   = "sum:trace.http.request.duration.by_type{service:checkout-api,env:production} - sum:trace.http.request.duration.by_type{service:checkout-api,env:production,duration:above_0.3s}"
+        }
+
+      + thresholds {
+          + target          = 99
+          + target_display  = (known after apply)
+          + timeframe       = "30d"
+          + warning         = 99.5
+          + warning_display = (known after apply)
+        }
+    }
+
+Plan: 7 to add, 0 to change, 0 to destroy.
+
+─────────────────────────────────────────────────────────────────────────────
+
+Saved the plan to: tfplan
+
+To perform exactly these actions, run the following command to apply:
+    terraform apply "tfplan"
+
+========== the plan as a machine-readable summary ==========
+
+'terraform show -json' is what a policy check (OPA, Conftest, Sentinel) reads.
+Reviewing a plan by eye does not scale; asserting on its JSON does.
+
+$ sh -c terraform show -json tfplan | jq -r '
+  .resource_changes[]
+  | "  \(.change.actions[0] | ascii_upcase)  \(.type)  \(.name)"' | sort
+  CREATE  datadog_dashboard  service_slo
+  CREATE  datadog_monitor  availability_budget_drain
+  CREATE  datadog_monitor  availability_fast_burn
+  CREATE  datadog_monitor  availability_slow_burn
+  CREATE  datadog_monitor  latency_fast_burn
+  CREATE  datadog_service_level_objective  availability
+  CREATE  datadog_service_level_objective  latency
+
+========== what a plan CANNOT tell you ==========
+
+Attempting to print each monitor's final query fails: it is null in the plan.
+
+Every burn-rate query interpolates the SLO's id —
+  burn_rate("${datadog_service_level_objective.availability.id}")...
+— and that id does not exist until the SLO is created. Terraform therefore
+marks the whole attribute unknown, and 'after' carries null rather than a
+string.
+
+The consequence matters for policy gates: a check that asserts on a monitor's
+QUERY cannot run at plan time here, because the value genuinely is not knowable
+yet. Checks must target attributes that are fully determined by the
+configuration — tags, priority, renotify_interval, message — or move to a
+post-apply test.
+
+$ sh -c terraform show -json tfplan | jq -r '
+  .resource_changes[]
+  | select(.type == "datadog_monitor")
+  | "  \(.name)",
+    "      query in .after         : \(.change.after.query // "null (unknown at plan time)")",
+    "      query in .after_unknown : \(.change.after_unknown.query)",
+    "      priority (known)        : \(.change.after.priority)"'
+  availability_budget_drain
+      query in .after         : null (unknown at plan time)
+      query in .after_unknown : true
+      priority (known)        : 4
+  availability_fast_burn
+      query in .after         : null (unknown at plan time)
+      query in .after_unknown : true
+      priority (known)        : 1
+  availability_slow_burn
+      query in .after         : null (unknown at plan time)
+      query in .after_unknown : true
+      priority (known)        : 2
+  latency_fast_burn
+      query in .after         : null (unknown at plan time)
+      query in .after_unknown : true
+      priority (known)        : 1
+
+========== what a policy gate could assert on this plan ==========
+
+Example checks a CI job would run against the JSON above, without any Datadog
+credentials at all:
+
+$ sh -c terraform show -json tfplan | jq -r '
+  [.resource_changes[] | select(.type=="datadog_monitor")] as $m
+  | "  monitors planned:            \($m | length)",
+    "  every monitor tagged:        \(if ($m | all(.change.after.tags | index("managed-by:terraform"))) then "PASS" else "FAIL" end)",
+    "  every monitor has a message: \(if ($m | all(.change.after.message | length > 0)) then "PASS" else "FAIL" end)",
+    "  page-severity have renotify: \(if ($m | map(select(.change.after.priority <= 2)) | all(.change.after.renotify_interval > 0)) then "PASS" else "FAIL" end)"'
+  monitors planned:            4
+  every monitor tagged:        PASS
+  every monitor has a message: PASS
+  page-severity have renotify: PASS
