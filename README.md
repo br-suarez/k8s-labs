@@ -1,97 +1,160 @@
-# Kubernetes Labs — Bryan M. Suarez
+# DevOps / SRE Mastery — Bryan M. Suarez
 
-Hands-on Kubernetes and SRE lab portfolio. Modules 01–12 were built during a
-private course based on [KubeLabs](https://github.com/cachac/kubelabs); modules
-20–31 are a self-directed site reliability engineering track.
+A production-shaped reliability platform, built one layer at a time, and the
+curriculum that produces it.
 
-**Goal:** demonstrate practical site reliability engineering — defining SLIs/SLOs
-and error budgets, gating deployments on them, automating operational toil, and
-managing observability and infrastructure as code.
+This repository is two things at once:
 
-Every lab is executed against a real cluster and ships the command output it
-produced, including the mistakes made along the way.
-
-## Stack
-
-**Kubernetes track (01–12)** — Kind, kubectl, Helm, Kustomize
-
-**SRE track (20–31)** — Prometheus, Grafana, Alertmanager, Argo CD, Argo
-Rollouts, Terraform, Ansible, Datadog (as code), Docker multi-stage, GitHub
-Actions, `strace` / `perf`
-
-## Modules (aligned with official KubeLabs numbering)
-
-| # | Module | Status | Notes |
-|---|--------|--------|-------|
-| 01 | [Kind Installation](./01-installation/README.md) | ✅ Complete | Cluster set up with Kind, troubleshooting inotify limits |
-| 02 | Remote Connection (optional, MicroK8s only) | ⬜ N/A | Not applicable, using Kind |
-| 03 | [First Steps — building a Pod](./03-first-steps-pod/README.md) | ✅ Complete | Pod lifecycle, port-forward, local port conflict troubleshooting |
-| 04 | [ReplicaSets](./04-replicasets/README.md) | ✅ Complete | Pod adoption via label collision, self-healing test |
-| 05 | [Deployments](./05-deployments/README.md) | ✅ Complete | Rolling update, rollback, deprecated --record flag |
-| 06 | [DaemonSet](./06-daemonset/README.md) | ✅ Complete | One-pod-per-node, scale subresource not supported, self-healing |
-| 07 | [Quick CLI Commands](./07-cli-commands/README.md) | ✅ Complete | metrics-server install/patch, scale, contexts, events |
-| 08 | [Namespaces](./08-namespaces/README.md) | ✅ Complete | Resource isolation, quota inspection, cluster restart recovery |
-| 09 | [Practice](./09-practice/README.md) | ✅ Complete | Resource requests/limits, scaling events, control plane restart diagnosis |
-| 10 | [Quotas and Limits](./10-quotas-limits/README.md) | ✅ Complete | ResourceQuota enforcement, LimitRange defaults, quota rejection captured |
-| 11 | [Apps](./11-apps/README.md) | ✅ Complete | ConfigMaps, Secrets, base64 vs encryption, last-applied-configuration leak |
-| 12 | [Services](./12-services/README.md) | ✅ Complete | ClusterIP, DNS resolution via CoreDNS, quota headroom during debugging |
-| 13 | Storage | ⬜ Pending | |
-| 14 | Networking | ⬜ Pending | |
-| 14a | Practice 2 | ⬜ Pending | |
-| 15 | Lifecycle | ⬜ Pending | |
-| 16 | Taints & Tolerations (optional) | ⬜ Pending | |
-| 17 | Final Practice | ⬜ Pending | |
-| 18 | Part II (CI/CD, Kustomize) | ⬜ Pending | |
-
-Mark each module as ✅ as you document it.
+1. **A portfolio.** Every module ships working code, the command output it
+   produced, and a `Problem → Solution → What I Learned` write-up — including the
+   mistakes made on the way.
+2. **A transferable curriculum.** Every module opens with a diagnostic test. Pass
+   it and you skip to the advanced work; fail it and you get the full path from
+   fundamentals. The same material serves a beginner and an experienced engineer
+   without being rewritten for either.
 
 ---
 
-## Part II — SRE Track
+## The platform: Pulse
 
-A second track focused on production reliability engineering rather than cluster
-administration: service level objectives, safe delivery, toil automation and
-infrastructure as code. Numbering starts at 20 so the KubeLabs modules above keep
-their slots.
+Rather than sixty disconnected labs, the track builds **one multi-service
+platform** and adds a layer to it every module. Pulse is an endpoint health
+monitoring service — deliberately an SRE tool, so that instrumenting it and
+reasoning about its failure modes is the point rather than a detour.
 
-### Deep labs
+| Service | Role | Why it earns its place |
+|---|---|---|
+| `pulse-api` | Go REST API — CRUD for checks, serves results | Instrumentation and routing surface |
+| `pulse-worker` | Go consumer — pulls jobs, probes targets, writes results | Queue depth is a **saturation** signal, the hardest SLI to teach |
+| `pulse-web` | Static dashboard | Second backend for host/path routing and canary splits |
+| `postgres` | Result store | Real state: StatefulSet, PVC, backup and restore drills |
+| `redis` | Job queue | Observable backlog, natural failure injection point |
 
-| # | Module | Status | Notes |
-|---|--------|--------|-------|
-| 20 | [SLIs, SLOs & Error Budgets](./20-slo-error-budgets/README.md) | ✅ Complete | Burn-rate alerting proven end to end: injected a 35% error rate, paged at 14.4x, watched the short window resolve it while the long window was still over threshold |
-| 21 | [Safe Deployments with ArgoCD](./21-argocd-canary/README.md) | ✅ Complete | Canary gated on the module 20 SLI: bad release auto-rejected at 20% traffic, good one promoted. Found and fixed a 3x blast-radius bug caused by a pause shorter than the analysis time-to-verdict |
-| 22 | [Toil Automation & Runbooks](./22-toil-automation/README.md) | ✅ Complete | Alertmanager webhook runs the module 20 runbook automatically: 11 manual commands → 0, full diagnosis on disk 13s after the page, unattended |
-| 23 | [Observability with Terraform + Datadog](./23-terraform-datadog/README.md) | ✅ Complete *(plan only)* | 2 SLOs, 4 burn-rate monitors and a dashboard as code, validated and planned offline with policy assertions on the plan JSON. **No `apply` — no Datadog account** |
+At the end of every module the platform is in a **deployable, demonstrable
+state**. It starts as a process on a VM and ends deployed by GitOps to GKE,
+emitting its own traces and metrics, provisioned by Terraform, and released
+through canary deployments gated on its own SLO.
 
-### Hands-on refreshers
+### How it grows
 
-Shorter than the deep labs — one concrete scenario each, executed and broken on
-purpose, closing with a short note: what broke, how it was diagnosed, which command
-was the key.
+| Module | Layer added |
+|---|---|
+| 01 | Repo layout, `verify.sh` harness, Makefile |
+| 02 | NGINX edge: reverse proxy, TLS, caching |
+| 03 | Containerized, distroless images, Compose stack |
+| 04 | Running on Kubernetes (kind): Deployments, Services, HPA |
+| 05 | NGINX **replaced** by Gateway API — `HTTPRoute` by path and header |
+| 06 | Postgres as StatefulSet, shared NFS storage, PDBs, backup drill |
+| 07 | kube-prometheus-stack, ServiceMonitors, RED dashboards, an SLO |
+| 08 | OpenTelemetry SDK + Collector, traces, metric→trace exemplars |
+| 09 | GitHub Actions: build, test, scan, SBOM, publish by digest |
+| 10 | Argo CD app-of-apps, Kustomize overlays, self-heal |
+| 11 | Argo Rollouts canary gated on the module 07 SLO |
+| 12 | Trivy, Cosign signing, Kyverno admission policy |
+| 13 | Terraform modules provision cluster and platform infrastructure |
+| 14 | Same Terraform targets GKE, with a teardown drill |
+| 15 | Ansible-provisioned legacy worker + equivalent Jenkinsfile |
+| 16 | Game Day: injected failures, incident timeline, postmortem |
 
-| # | Module | Status | Scenario |
-|---|--------|--------|----------|
-| 24 | [Kubernetes Failure Injection](./24-k8s-failure-injection/README.md) | ✅ Complete | CrashLoopBackOff, Service with no endpoints, Service *with* endpoints that still fails, pending PVC — each diagnosed from symptoms and fixed |
-| 25 | [Docker Multi-stage & Debugging](./25-docker-multistage/README.md) | ✅ Complete | 1.66 GB → 235 MB and 6s → 2s rebuilds; debugged two containers that build cleanly and die on start (wrong CMD path, root-owned dir under a non-root user) |
-| 26 | [Helm Package & Rollback](./26-helm-chart-rollback/README.md) | ✅ Complete | Hand-written chart; caught `helm upgrade` reporting "deployed" on a release whose pods never started, rolled back and verified on three independent objects |
-| 27 | [Terraform Import & Drift](./27-terraform-import-drift/README.md) | ✅ Complete | Reusable module, adopted a hand-created object via `import`, caused drift two ways; `plan` vs `plan -refresh-only` on the same field, opposite directions |
-| 28 | [Ansible Idempotency](./28-ansible-idempotency/README.md) | ✅ Complete | Naive vs declarative playbook: `changed=4` forever and a duplicated motd line vs `changed=0` on the second run; also caught Ansible silently ignoring a config file on a world-writable mount |
-| 29 | [PromQL & Alerting](./29-promql-alerting/README.md) | ✅ Complete | RED + saturation queries; two classic mistakes shown against their correct form; latency alert driven from 198ms to 950ms and back, pending→firing measured at 2m06s |
-| 30 | [CI/CD Safe Deploy Gate](./30-cicd-deploy-gate/README.md) | ✅ Complete | Gate blocked a release whose pods were `READY=true, RESTARTS=0` while failing 19.2% of requests; also caught my own gate false-negativing a healthy release |
-| 31 | [Linux Performance Debugging](./31-linux-performance/README.md) | ✅ Complete | Syscall storm (200k `write` calls → 8x faster), a hang diagnosed from `/proc/pid/wchan`, and a CPU-bound case where strace finding *nothing* was the diagnosis |
+---
 
-## How each lab is documented
+## Modules
 
-Each folder contains the manifests and code used, plus a `README.md`. Two
-formats, depending on the depth of the lab:
+| # | Module | Blocks | Status |
+|---|---|---|---|
+| 00 | [Bootstrap & Environment](./modules/00-bootstrap/README.md) | 2 | ⬜ |
+| 01 | [Linux & Scripting](./modules/01-linux-scripting/README.md) | 4 | ⬜ |
+| 02 | [NGINX as Edge](./modules/02-nginx-edge/README.md) | 4 | ⬜ |
+| 03 | [Docker & Image Supply Chain](./modules/03-docker-supply-chain/README.md) | 4 | ⬜ |
+| 04 | [Kubernetes Core](./modules/04-kubernetes-core/README.md) | 4 | ⬜ |
+| 05 | [Gateway API](./modules/05-gateway-api/README.md) | 6 | ⬜ |
+| 06 | [Kubernetes Advanced: State, Storage, HA](./modules/06-kubernetes-advanced/README.md) | 5 | ⬜ |
+| 07 | [Prometheus & Grafana](./modules/07-prometheus-grafana/README.md) | 4 | ⬜ |
+| 08 | [OpenTelemetry](./modules/08-opentelemetry/README.md) | 6 | ⬜ |
+| 09 | [CI with GitHub Actions](./modules/09-github-actions/README.md) | 4 | ⬜ |
+| 10 | [GitOps with Argo CD](./modules/10-gitops-argocd/README.md) | 5 | ⬜ |
+| 11 | [Progressive Delivery](./modules/11-progressive-delivery/README.md) | 4 | ⬜ |
+| 12 | [DevSecOps & Supply Chain](./modules/12-devsecops/README.md) | 5 | ⬜ |
+| 13 | [Terraform](./modules/13-terraform/README.md) | 5 | ⬜ |
+| 14 | [Google Cloud](./modules/14-gcp/README.md) | 6 | ⬜ |
+| 15 | [Jenkins & Ansible: Operate and Migrate](./modules/15-jenkins-ansible/README.md) | 4 | ⬜ |
+| 16 | [Game Day & Hardening](./modules/16-game-day/README.md) | 4 | ⬜ |
 
-- **Modules 01–23 (deep labs)** — **Problem → Solution → What I Learned**,
-  including the issues hit along the way and how they were resolved.
-- **Modules 24–31 (refreshers)** — a lighter note per scenario:
-  **what broke → how it was diagnosed → the command that mattered**.
+**76 blocks of 120 minutes ≈ 152 hours.** See [PLAN.md](./PLAN.md) for the
+week-by-week calendar and [TRACKER.md](./TRACKER.md) for progress.
 
-Every SRE-track module ships an `evidence/` directory with the real command
-output from the run described, and a `run-lab.sh` that reproduces it from
-scratch. Where something could not be executed — module 23 has no Datadog
-account and is `plan`-only — the README says so explicitly rather than implying
-otherwise.
+### What "done" means
+
+A module is complete when all four exit criteria hold — not when the labs run:
+
+1. I can design and implement the solution **without documentation open**.
+2. I can debug **a failure I have not seen before** in this technology, under pressure.
+3. I can explain the **trade-offs** of my decision against two named alternatives.
+4. I can defend it in a senior SRE interview and in an architecture review.
+
+Every module translates these into something verifiable. Not "understand
+Prometheus", but "I can write a recording rule that takes a dashboard from 8s to
+under 1s, and explain why it works".
+
+---
+
+## Repository layout
+
+```
+├── PLAN.md         # week-by-week calendar, slip protocol
+├── TRACKER.md      # progress, self-assessment, spaced-repetition dates
+├── SETUP.md        # reproducible local environment
+├── platform/       # Pulse — the capstone
+├── modules/NN-*/
+│   ├── README.md         # objectives, exit criteria, portfolio write-up
+│   ├── DIAGNOSTICO.md    # entry test — decides your path through the module
+│   ├── labs/             # progressive labs with automated verification
+│   ├── BREAK-FIX.md      # a broken scenario to diagnose
+│   ├── CAUSA-RAIZ.md     # the root cause, kept separate to avoid spoilers
+│   ├── PREGUNTAS.md      # senior interview questions
+│   └── NOTAS.md          # working notes
+└── archive/        # completed prior work, preserved
+```
+
+### Language convention
+
+English for everything a third party reads or runs: code, commands, commit
+messages, and the module `README.md` files. Spanish for the study instruments —
+`PLAN.md`, `TRACKER.md`, `DIAGNOSTICO.md`, `BREAK-FIX.md`, `PREGUNTAS.md`,
+`NOTAS.md` — because that is where thinking happens, and it happens faster in
+the language you think in.
+
+---
+
+## Prior work (`archive/`)
+
+Completed before this track began, preserved with its original documentation.
+
+### KubeLabs modules 01–12
+
+Cluster fundamentals built against a real Kind cluster: Pods, ReplicaSets,
+Deployments, DaemonSets, namespaces, quotas, ConfigMaps and Secrets, Services
+and CoreDNS resolution. → [`archive/`](./archive/)
+
+### SRE track 20–31
+
+Reliability engineering rather than cluster administration.
+
+| # | Module | What it proved |
+|---|---|---|
+| 20 | [SLIs, SLOs & Error Budgets](./archive/sre-track/20-slo-error-budgets/README.md) | Multi-window burn-rate alerting proven end to end: 35% error rate injected, paged at 14.4x, short window resolved while the long window was still over threshold |
+| 21 | [Safe Deployments with Argo CD](./archive/sre-track/21-argocd-canary/README.md) | Canary gated on the module 20 SLI; a bad release auto-rejected at 20% traffic. Found a 3x blast-radius bug caused by a pause shorter than the analysis time-to-verdict |
+| 22 | [Toil Automation & Runbooks](./archive/sre-track/22-toil-automation/README.md) | Alertmanager webhook runs the runbook unattended: 11 manual commands → 0, full diagnosis on disk 13s after the page |
+| 23 | [Observability as Code](./archive/sre-track/23-terraform-datadog/README.md) | 2 SLOs, 4 burn-rate monitors and a dashboard as code, validated offline with policy assertions on the plan JSON *(plan only — no account)* |
+| 24 | [Kubernetes Failure Injection](./archive/sre-track/24-k8s-failure-injection/README.md) | CrashLoopBackOff, Service with no endpoints, Service *with* endpoints that still fails, pending PVC — each diagnosed from symptoms |
+| 25 | [Docker Multi-stage & Debugging](./archive/sre-track/25-docker-multistage/README.md) | 1.66 GB → 235 MB, 6s → 2s rebuilds; two containers that build clean and die on start |
+| 26 | [Helm Package & Rollback](./archive/sre-track/26-helm-chart-rollback/README.md) | Caught `helm upgrade` reporting "deployed" for a release whose pods never started |
+| 27 | [Terraform Import & Drift](./archive/sre-track/27-terraform-import-drift/README.md) | `plan` vs `plan -refresh-only` on the same field, pointing opposite directions |
+| 28 | [Ansible Idempotency](./archive/sre-track/28-ansible-idempotency/README.md) | `changed=4` forever vs `changed=0`; caught Ansible silently ignoring a config on a world-writable mount |
+| 29 | [PromQL & Alerting](./archive/sre-track/29-promql-alerting/README.md) | RED and saturation queries; latency alert driven 198ms → 950ms and back, pending→firing measured at 2m06s |
+| 30 | [CI/CD Safe Deploy Gate](./archive/sre-track/30-cicd-deploy-gate/README.md) | Gate blocked a release with `READY=true, RESTARTS=0` that was failing 19.2% of requests |
+| 31 | [Linux Performance Debugging](./archive/sre-track/31-linux-performance/README.md) | Syscall storm (200k `write` calls → 8x faster), a hang read from `/proc/pid/wchan`, and a CPU-bound case where strace finding *nothing* was the diagnosis |
+
+Each archived module ships an `evidence/` directory with real command output and
+a `run-lab.sh` that reproduces it. Where something could not be executed, the
+README says so explicitly rather than implying otherwise.

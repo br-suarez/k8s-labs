@@ -1,0 +1,21 @@
+# Cluster profile: lite — modules 01-06. Approx 2.5 GiB.
+# One worker is enough until module 06 needs to prove a node can be lost.
+apiVersion: kind.x-k8s.io/v1alpha4
+kind: Cluster
+name: pulse-lite
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 8080
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 8443
+        protocol: TCP
+  - role: worker

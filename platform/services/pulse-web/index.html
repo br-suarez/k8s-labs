@@ -1,0 +1,36 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Pulse</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; max-width: 60rem; margin: 3rem auto; padding: 0 1rem; }
+  table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+  th, td { text-align: left; padding: .5rem .75rem; border-bottom: 1px solid #ddd; }
+  .ok { color: #1a7f37; } .bad { color: #cf222e; }
+  code { background: #f6f8fa; padding: .1rem .3rem; border-radius: 3px; }
+</style>
+<h1>Pulse</h1>
+<p>Endpoint health monitoring. Results come from <code>/api/results</code>.</p>
+<table><thead><tr><th>Check</th><th>Status</th><th>Latency</th><th>Observed</th></tr></thead>
+<tbody id="rows"><tr><td colspan="4">Loading…</td></tr></tbody></table>
+<script>
+async function refresh() {
+  const tbody = document.getElementById('rows');
+  try {
+    const res = await fetch('/api/results');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="4">No results yet.</td></tr>'; return; }
+    tbody.innerHTML = data.slice(-25).reverse().map(r => {
+      const ok = r.status_code >= 200 && r.status_code < 300;
+      return `<tr><td>${r.check_id}</td>
+        <td class="${ok ? 'ok' : 'bad'}">${r.error ? 'ERR' : r.status_code}</td>
+        <td>${r.latency_ms} ms</td>
+        <td>${new Date(r.observed_at).toLocaleTimeString()}</td></tr>`;
+    }).join('');
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="4" class="bad">Cannot reach API: ${e.message}</td></tr>`;
+  }
+}
+refresh();
+setInterval(refresh, 5000);
+</script>
