@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "checkout-api.fullname" . }}
+  labels:
+    {{- include "checkout-api.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "checkout-api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "checkout-api.labels" . | nindent 8 }}
+      annotations:
+        # Hash of the rendered ConfigMap. Without this, changing a config value
+        # updates the ConfigMap but leaves the pods running the old content —
+        # `helm upgrade` reports success and nothing actually changed. Putting
+        # the hash in the pod template makes a config change a pod-template
+        # change, which is what triggers a rollout.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: APP_VERSION
+              value: {{ .Values.appVersion | quote }}
+            - name: BASELINE_ERROR_RATE
+              value: {{ .Values.baselineErrorRate | quote }}
+            - name: GREETING
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "checkout-api.fullname" . }}
+                  key: greeting
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 1
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

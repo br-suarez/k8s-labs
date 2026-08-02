@@ -1,0 +1,33 @@
+replicaCount: 2
+
+image:
+  repository: slo-demo
+  tag: v1
+  # The image is side-loaded into kind, so there is nothing to pull from.
+  pullPolicy: Never
+
+# Surfaced by the application in its /api response and as the `version` label on
+# the app_build_info metric, which is what makes a rollback verifiable from
+# outside the cluster rather than by reading YAML.
+appVersion: v1
+
+# Baseline failure injection, inherited from module 20's service.
+baselineErrorRate: "0.001"
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 32Mi
+  limits:
+    memory: 64Mi
+
+# Rendered into a ConfigMap so there is a second, independent object to check
+# after a rollback — a Deployment reverting proves less than two unrelated
+# resources reverting together.
+config:
+  greeting: "checkout-api v1"
+  featureFlags: "checkout_v2=off"
