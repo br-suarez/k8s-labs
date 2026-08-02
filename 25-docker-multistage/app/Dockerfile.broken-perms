@@ -1,0 +1,25 @@
+# BROKEN 2 — correct path, correct command, still exits 1.
+#
+# Everything is copied as root, then USER node takes over. The application boots
+# and tries to create its data directory under /app, which root owns and the
+# `node` user cannot write to.
+#
+# Harder than the path bug: the file it needs exists, the command is right, and
+# the container runs long enough to log something. The failure is an ownership
+# mismatch between build time and run time.
+FROM node:22 AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY src ./src
+RUN npm run build
+
+FROM node:22-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+# Copied as root. Dockerfile.multistage follows this with `chown -R node:node`;
+# this one does not.
+COPY --from=build /app/dist ./dist
+USER node
+EXPOSE 3000
+CMD ["node", "dist/server.js"]
