@@ -1,0 +1,94 @@
+# Helm values for prometheus-community/kube-prometheus-stack on a kind cluster.
+#
+# The two *SelectorNilUsesHelmValues flags are the important part of this file.
+# By default the chart makes the Prometheus CR only select ServiceMonitors and
+# PrometheusRules carrying the chart's own release label. Setting them to false
+# makes Prometheus pick up ANY ServiceMonitor/PrometheusRule in the cluster,
+# which is what lets the SLO rules in ../slo/ be applied independently of Helm.
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+
+    # 6h is plenty for a lab and keeps the WAL small on a 7 GB WSL box.
+    retention: 6h
+
+    # 15s scrape interval: burn-rate alerts use 5m short windows, so the
+    # short window needs enough samples to be meaningful.
+    scrapeInterval: 15s
+    evaluationInterval: 15s
+
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        memory: 1Gi
+
+    # kind's default storage class is hostPath-backed; emptyDir is simpler and
+    # the lab does not need Prometheus data to survive a pod restart.
+    storageSpec: {}
+
+grafana:
+  adminPassword: slolab
+
+  # Anonymous read-only access. This is a throwaway kind cluster reachable only
+  # through `kubectl port-forward`, and it means the dashboard can be opened (or
+  # screenshotted for the lab evidence) without passing credentials around.
+  # This is a lab convenience and would not belong in a real deployment.
+  grafana.ini:
+    auth.anonymous:
+      enabled: true
+      org_name: Main Org.
+      org_role: Viewer
+  defaultDashboardsTimezone: America/Costa_Rica
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+
+alertmanager:
+  alertmanagerSpec:
+    # Required by module 22 (toil automation).
+    #
+    # By default the Prometheus Operator injects `namespace="<ns>"` into every
+    # route generated from an AlertmanagerConfig CRD, so one tenant cannot
+    # capture another tenant's alerts. Sensible — but the SLO alerts in
+    # ../slo/burn-rate-alerts.yaml carry no `namespace` label at all: their
+    # expressions aggregate it away with sum(), and the labels block only adds
+    # severity/slo/service. The injected matcher therefore never matches and the
+    # route is silently dead — Alertmanager reports a perfectly valid config.
+    #
+    # `None` disables the injection. Acceptable here because this cluster has a
+    # single tenant; a real multi-tenant cluster should instead give the alerts
+    # a namespace label rather than turning the isolation off.
+    alertmanagerConfigMatcherStrategy:
+      type: None
+    resources:
+      requests:
+        cpu: 20m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+
+# kind runs its control plane as static pods inside a container, so these
+# scrape targets do not resolve and would sit permanently DOWN, adding noise
+# to the lab. Disabling them keeps the target list honest.
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubeEtcd:
+  enabled: false
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 32Mi

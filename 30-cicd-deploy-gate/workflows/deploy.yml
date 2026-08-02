@@ -1,0 +1,104 @@
+# GitHub Actions pipeline with a health gate between staging and production.
+#
+# NOTE ON THIS FILE: in a real repository it lives at .github/workflows/deploy.yml.
+# It is kept inside the module folder here so that adding this lab to the
+# portfolio repo does not silently start running CI on every push. The GATE
+# ITSELF (scripts/health-gate.sh) is what this lab executes for real — see
+# ../evidence/. Claiming a pipeline "works" because the YAML is well-formed
+# would be exactly the kind of unverified assertion these labs exist to avoid.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag to deploy"
+        required: true
+        default: v1
+
+concurrency:
+  # One deploy at a time per branch. Without this, two merges in quick
+  # succession race each other through staging and the gate grades whichever
+  # release happens to be running when it queries Prometheus.
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: slo-demo
+  TAG: ${{ github.event.inputs.image_tag || 'v1' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: meta
+        name: Resolve immutable tag
+        run: |
+          # Never deploy a floating tag. `latest` means two environments running
+          # "the same version" can be running different code, and a rollback
+          # target that moves is not a rollback target.
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Build image
+        run: docker build -t "${IMAGE}:${{ steps.meta.outputs.tag }}" ./app
+
+      - name: Unit tests
+        run: echo "unit tests would run here"
+
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        run: |
+          kubectl apply -f manifests/app.yaml -n cicd-staging
+          kubectl set image deploy/checkout \
+            checkout="${IMAGE}:${{ needs.build.outputs.tag }}" -n cicd-staging
+
+  gate:
+    needs: [build, deploy-staging]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The gate is a script in the repo, not inline YAML, specifically so it
+      # can be run by hand during an incident and tested outside CI. A gate that
+      # only exists inside a workflow file cannot be exercised or debugged.
+      - name: Health gate — rollout, smoke test, SLO verification
+        run: ./scripts/health-gate.sh cicd-staging checkout checkout
+
+  deploy-production:
+    needs: [build, gate]
+    runs-on: ubuntu-latest
+    environment:
+      # This is the manual approval. A GitHub Environment with required
+      # reviewers pauses the job here until a human approves, and the
+      # `needs: gate` above means the button is not even offered unless the
+      # automated SLO check already passed.
+      #
+      # Automated verification first, human judgement second. A human asked to
+      # approve without evidence will approve, every time.
+      name: production
+      url: https://checkout.example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Promote the exact artifact that passed the gate
+        run: |
+          kubectl apply -f manifests/app.yaml -n cicd-production
+          kubectl set image deploy/checkout \
+            checkout="${IMAGE}:${{ needs.build.outputs.tag }}" -n cicd-production
+          kubectl rollout status deploy/checkout -n cicd-production --timeout=120s
+
+      - name: Verify production after promotion
+        run: ./scripts/health-gate.sh cicd-production checkout checkout

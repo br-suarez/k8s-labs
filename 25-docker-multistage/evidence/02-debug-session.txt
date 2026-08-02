@@ -1,0 +1,127 @@
+======================================================================
+ PART 2 — debugging two containers that fail to start
+======================================================================
+
+========== BUG 1 — builds fine, exits immediately ==========
+
+$ docker build -q -t checkout-api:broken-path -f app/Dockerfile.broken-path app
+sha256:9984d55c5b4a9d0e7c6d31ff1a0bdb7d0aa896775e5f0bdfdc9549904c901ec2
+
+The build succeeded. Now run it:
+
+$ sh -c docker run --name dbg-path checkout-api:broken-path; echo "exit code: $?"
+node:internal/modules/cjs/loader:1433
+  throw err;
+  ^
+
+Error: Cannot find module '/app/dist/index.js'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+    at Function._load (node:internal/modules/cjs/loader:1216:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.23.2
+exit code: 1
+
+Step 1 — what did it say before dying? The container is gone, but its logs are not.
+
+$ docker logs dbg-path
+node:internal/modules/cjs/loader:1433
+  throw err;
+  ^
+
+Error: Cannot find module '/app/dist/index.js'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+    at Function._load (node:internal/modules/cjs/loader:1216:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.23.2
+
+Step 2 — how did it exit? ExitCode 1 is the process refusing to run,
+not the OOM killer (137) and not a SIGTERM (143).
+
+$ docker inspect dbg-path --format State.ExitCode={{.State.ExitCode}}  OOMKilled={{.State.OOMKilled}}  Error="{{.State.Error}}"
+State.ExitCode=1  OOMKilled=false  Error=""
+
+Step 3 — what was it actually told to run?
+
+$ docker inspect dbg-path --format Cmd={{.Config.Cmd}}  Entrypoint={{.Config.Entrypoint}}  WorkingDir={{.Config.WorkingDir}}  User={{.Config.User}}
+Cmd=[node dist/index.js]  Entrypoint=[docker-entrypoint.sh]  WorkingDir=/app  User=node
+
+Step 4 — 'docker exec' is useless here: the container is not running.
+
+$ sh -c docker exec dbg-path ls /app/dist; echo "exit: $?"
+Error response from daemon: container 22341e0179399e444d7e73511d2a6d0c104efd7f4da97d2810ad210bee133ea0 is not running
+exit: 1
+
+The way in is a NEW container from the same image with the entrypoint replaced,
+which never runs the broken command:
+
+$ docker run --rm --entrypoint sh checkout-api:broken-path -c ls -la /app/dist
+total 1140
+drwxr-xr-x    1 node     node          4096 Aug  2 05:45 .
+drwxr-xr-x    1 node     node          4096 Aug  2 05:45 ..
+drwxr-xr-x    2 node     node          4096 Aug  2 05:45 data
+-rw-r--r--    1 node     node       1151023 Aug  2 05:45 server.js
+
+CMD says dist/index.js. The file on disk is dist/server.js.
+
+========== BUG 2 — right file, right command, still exits 1 ==========
+
+$ docker build -q -t checkout-api:broken-perms -f app/Dockerfile.broken-perms app
+sha256:550034e103b949f988b77bf822b21fd99f3de44b58bc11eb02cc84a137bc337e
+
+$ sh -c docker run --name dbg-perms checkout-api:broken-perms; echo "exit code: $?"
+FATAL: cannot write startup marker to /app/dist/data
+EACCES: EACCES: permission denied, mkdir '/app/dist/data'
+exit code: 1
+
+Step 1 — logs. This one reaches its own error handler, so the message is the
+application's rather than node's:
+
+$ docker logs dbg-perms
+FATAL: cannot write startup marker to /app/dist/data
+EACCES: EACCES: permission denied, mkdir '/app/dist/data'
+
+Step 2 — the file it wants exists and the command is correct, so this is not
+bug 1 again:
+
+$ docker run --rm --entrypoint sh checkout-api:broken-perms -c ls -la /app/dist/server.js
+-rw-r--r--    1 root     root       1151023 Aug  2 05:45 /app/dist/server.js
+
+Step 3 — who owns the directory, and who is the process?
+
+$ docker run --rm --entrypoint sh checkout-api:broken-perms -c id; echo '--- /app ---'; ls -la /app
+uid=1000(node) gid=1000(node) groups=1000(node),1000(node)
+--- /app ---
+total 12
+drwxr-xr-x    1 root     root          4096 Aug  2 05:45 .
+drwxr-xr-x    1 root     root          4096 Aug  2 05:47 ..
+drwxr-xr-x    2 root     root          4096 Aug  2 05:45 dist
+
+Root owns /app; the container runs as uid 1000. EACCES.
+Proof: run the same image as root and it starts.
+
+$ sh -c docker run --rm -d --user 0 --name dbg-perms-root checkout-api:broken-perms >/dev/null && sleep 3 && docker logs dbg-perms-root && docker rm -f dbg-perms-root >/dev/null
+startup marker written to /app/dist/data
+checkout-api listening on :3000
+
+========== The fixed image does both correctly ==========
+
+$ sh -c docker run --rm -d --name dbg-fixed -p 3103:3000 checkout-api:multistage >/dev/null && sleep 3 && docker logs dbg-fixed && curl -s localhost:3103/ && echo && docker rm -f dbg-fixed >/dev/null
+startup marker written to /app/dist/data
+checkout-api listening on :3000
+{"service":"checkout-api","uid":1000,"node":"v22.23.2"}

@@ -1,0 +1,207 @@
+======================================================================
+ LINUX PERFORMANCE DEBUGGING — strace and perf
+ date: 2026-08-02T06:49:17Z
+======================================================================
+
+========== CASE A — a report job that takes far too long ==========
+
+Symptom: writing 200,000 rows takes seconds. The code is a plain loop over
+f.write(). Nothing in the Python looks expensive.
+
+$ python3 /work/report_writer.py --mode=slow --rows=200000 --out=/tmp/slow.csv
+mode=slow rows=200000 bytes=6155780 elapsed=2.382s
+
+Step 1 — count syscalls. 'strace -c' summarises instead of printing every call,
+which is the only usable form on a process making millions of them.
+
+$ strace -c -f python3 /work/report_writer.py --mode=slow --rows=200000 --out=/tmp/slow.csv 2>&1 | sed -n '/% time/,$p' | head -9
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 99.62    6.292214          31    200001           write
+  0.12    0.007660          31       245        24 newfstatat
+  0.06    0.003545          59        60         8 openat
+  0.04    0.002400          35        68           read
+  0.03    0.001973          28        69         2 lseek
+  0.03    0.001773          26        66           rt_sigaction
+  0.02    0.001557          29        52           close
+
+200,000 write() calls for 200,000 rows — one syscall per line. Each one is a
+user->kernel transition. The fix is not faster code, it is fewer crossings:
+remove the per-line flush and let the runtime buffer.
+
+$ strace -c -f python3 /work/report_writer.py --mode=fast --rows=200000 --out=/tmp/fast.csv 2>&1 | sed -n '/% time/,$p' | head -9
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 57.14    0.013802          18       754           write
+ 17.55    0.004239          17       245        24 newfstatat
+  6.59    0.001591          23        68           read
+  4.70    0.001136          18        60         8 openat
+  4.39    0.001060          15        69         2 lseek
+  2.95    0.000713          13        52           close
+  2.71    0.000655          13        47           mmap
+
+Identical output, different syscall count:
+
+$ ls -l /tmp/slow.csv /tmp/fast.csv; cmp /tmp/slow.csv /tmp/fast.csv && echo 'files are byte-identical'
+-rw-r--r-- 1 root root 6155780 Aug  2 06:49 /tmp/fast.csv
+-rw-r--r-- 1 root root 6155780 Aug  2 06:49 /tmp/slow.csv
+files are byte-identical
+
+Wall clock, three runs each:
+
+$ for m in slow fast; do for i in 1 2 3; do python3 /work/report_writer.py --mode=$m --rows=200000 --out=/tmp/$m.csv; done; done
+mode=slow rows=200000 bytes=6155780 elapsed=0.590s
+mode=slow rows=200000 bytes=6155780 elapsed=0.613s
+mode=slow rows=200000 bytes=6155780 elapsed=0.625s
+mode=fast rows=200000 bytes=6155780 elapsed=0.070s
+mode=fast rows=200000 bytes=6155780 elapsed=0.070s
+mode=fast rows=200000 bytes=6155780 elapsed=0.070s
+
+========== CASE B — a service that starts and then hangs ==========
+
+Symptom: it logs 'ready' and stops. No CPU, no error, no exit.
+
+$ nohup python3 /work/stuck_service.py > /tmp/stuck.log 2>&1 & echo $! > /tmp/stuck.pid; sleep 3; cat /tmp/stuck.log; echo "pid: $(cat /tmp/stuck.pid)"
+starting order processor
+connecting to upstream order feed
+ready
+pid: 64
+
+Step 1 — is it running, and is it using CPU?
+
+$ ps -o pid,stat,%cpu,%mem,etime,cmd -p $(cat /tmp/stuck.pid)
+    PID STAT %CPU %MEM     ELAPSED CMD
+     64 S     0.0  0.0       00:03 python3 /work/stuck_service.py
+
+State S with 0% CPU: sleeping in a syscall. Not spinning, not crashed.
+Step 2 — which syscall? /proc/PID/syscall answers without attaching:
+the first field is the syscall NUMBER, the rest are its arguments.
+
+$ PID=$(cat /tmp/stuck.pid); echo "syscall: $(cat /proc/$PID/syscall)"; echo "wchan:   $(cat /proc/$PID/wchan)"; echo; echo 'syscall 257 on x86-64 = openat'; grep -m1 ' 257 ' /usr/include/asm/unistd_64.h 2>/dev/null || true
+syscall: 257 0xffffff9c 0x7fc9de62c8d0 0x80000 0x0 0x0 0x0 0x7ffd66172a40 0x7fc9de9d1011
+wchan:   wait_for_partner
+
+syscall 257 on x86-64 = openat
+
+Step 3 — strace confirms it, and shows the call as unfinished because the
+process is parked inside it rather than passing through it:
+
+$ PID=$(cat /tmp/stuck.pid); timeout 5 strace -p $PID 2>&1 | head -6
+strace: Process 64 attached
+openat(AT_FDCWD, "/tmp/orders.fifo", O_RDONLY|O_CLOEXECstrace: Process 64 detached
+ <detached ...>
+
+Step 4 — which FILE is it opening? /proc/PID/fd lists what it already holds:
+
+$ PID=$(cat /tmp/stuck.pid); ls -l /proc/$PID/fd/; echo '--- cwd ---'; ls -l /proc/$PID/cwd
+total 0
+lr-x------ 1 root root 64 Aug  2 06:50 0 -> /dev/null
+l-wx------ 1 root root 64 Aug  2 06:50 1 -> /tmp/stuck.log
+l-wx------ 1 root root 64 Aug  2 06:50 2 -> /tmp/stuck.log
+--- cwd ---
+lrwxrwxrwx 1 root root 0 Aug  2 06:50 /proc/64/cwd -> /work
+
+Opening a FIFO for reading blocks until a writer appears, and nothing ever
+writes to this one. Proof — supply a writer and the process moves on:
+
+$ PID=$(cat /tmp/stuck.pid); echo 'order-1' > /tmp/orders.fifo; sleep 2; cat /tmp/stuck.log; kill $PID 2>/dev/null; true
+starting order processor
+connecting to upstream order feed
+ready
+processed: order-1
+upstream closed
+
+========== CASE C — a slow service that strace cannot explain ==========
+
+Symptom: pricing 140 orders takes seconds.
+
+$ python3 /work/pricing_engine.py --orders 140
+priced 140 orders, total=16307.59, elapsed=0.930s
+
+Step 1 — the same first move as case A: count syscalls.
+
+$ strace -c -f python3 /work/pricing_engine.py --orders 140 2>&1 | tail -14
+  0.18    0.000030          30         1         1 access
+  0.17    0.000028          28         1           getgid
+  0.16    0.000027          27         1           getegid
+  0.16    0.000027          27         1           set_tid_address
+  0.15    0.000026          26         1           sysinfo
+  0.15    0.000025          25         1           geteuid
+  0.14    0.000023          23         1           gettid
+  0.14    0.000023          23         1           rseq
+  0.13    0.000022          22         1           arch_prctl
+  0.13    0.000022          22         1           set_robust_list
+  0.02    0.000003           3         1           write
+  0.00    0.000000           0         1           execve
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.016858          23       711        75 total
+
+A few hundred syscalls, almost all interpreter startup. THIS IS THE FINDING:
+the process is not waiting on the kernel at all, so it is not I/O, not the
+network, and not a lock. It is burning CPU in user space, and strace is the
+wrong tool from here on.
+
+$ perf stat -e task-clock,context-switches,page-faults python3 /work/pricing_engine.py --orders 140 2>&1 | tail -14
+priced 140 orders, total=16307.59, elapsed=1.021s
+
+ Performance counter stats for 'python3 /work/pricing_engine.py --orders 140':
+
+           1109.75 msec task-clock:u                     #    1.065 CPUs utilized          
+                 0      context-switches:u               #    0.000 /sec                   
+              1274      page-faults:u                    #    1.148 K/sec                  
+
+       1.042221159 seconds time elapsed
+
+       1.110551000 seconds user
+       0.000000000 seconds sys
+
+
+
+Step 2 — sample where the CPU time actually goes.
+
+$ cd /tmp && perf record -q -F 499 -g -o /tmp/perf.data python3 /work/pricing_engine.py --orders 140 >/dev/null 2>&1; perf report -i /tmp/perf.data --stdio --sort symbol 2>/dev/null | head -18
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 563  of event 'cycles:u'
+# Event count (approx.): 4171438177
+#
+# Children      Self  Symbol                          IPC   [IPC Coverage]
+# ........  ........  ..............................  ....................
+#
+    56.61%     0.00%  [.] 0x0000000000959cc0          -      -            
+            |          
+            |--18.26%--_PyEval_EvalFrameDefault
+            |          
+            |--5.50%--PyLong_FromLong
+            |          
+            |--4.90%--PyObject_Malloc
+
+perf points at the CPython interpreter loop, which is correct and useless:
+every Python function looks like _PyEval_EvalFrameDefault to a native profiler.
+To go deeper the profiler has to understand Python frames.
+
+$ python3 -c "
+import cProfile, pstats, io, sys
+sys.path.insert(0, '/work')
+import pricing_engine as pe
+pr = cProfile.Profile(); pr.enable()
+for oid in range(140): pe.price_order(oid)
+pr.disable()
+s = io.StringIO(); pstats.Stats(pr, stream=s).sort_stats('cumulative').print_stats(6)
+print(s.getvalue())
+"
+         421 function calls in 1.974 seconds
+
+   Ordered by: cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      140    0.001    0.000    1.974    0.014 /work/pricing_engine.py:30(price_order)
+      140    1.973    0.014    1.973    0.014 /work/pricing_engine.py:17(check_fraud_score)
+      140    0.000    0.000    0.000    0.000 /work/pricing_engine.py:12(apply_discount)
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+
+
+

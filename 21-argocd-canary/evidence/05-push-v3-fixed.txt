@@ -1,0 +1,5 @@
+SCENARIO B — DEPLOY slo-demo:v3-fixed (baseline error rate)
+
+==> rollout.yaml image set to slo-demo:v3-fixed
+==> pushed: 1729443 Release v3: fixes the v2 regression
+==> remote HEAD: 1729443

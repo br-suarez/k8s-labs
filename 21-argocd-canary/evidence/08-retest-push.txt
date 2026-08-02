@@ -1,0 +1,5 @@
+BLAST RADIUS RETEST — first pause 90s -> 180s, redeploying v2-bad
+
+==> rollout.yaml image set to slo-demo:v2-bad
+==> pushed: 39b3007 Tune canary pause to 180s and retry v2
+==> remote HEAD: 39b3007

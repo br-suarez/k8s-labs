@@ -1,0 +1,28 @@
+BASELINE
+
+argocd application: Synced   Healthy   67551a97ac1723725ccc82ff4ba8aeb9ddceab90
+
+Name:            slo-demo
+Namespace:       canary-demo
+Status:          ✔ Healthy
+Strategy:        Canary
+  Step:          5/5
+  SetWeight:     100
+  ActualWeight:  100
+Images:          slo-demo:v1 (stable)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       5
+  Ready:         5
+  Available:     5
+
+NAME                                  KIND        STATUS     AGE    INFO
+⟳ slo-demo                            Rollout     ✔ Healthy  2m52s  
+└──# revision:1                                                     
+   └──⧉ slo-demo-554f85ff79           ReplicaSet  ✔ Healthy  2m52s  stable
+      ├──□ slo-demo-554f85ff79-8pcd2  Pod         ✔ Running  2m52s  ready:1/1
+      ├──□ slo-demo-554f85ff79-d4wc2  Pod         ✔ Running  2m52s  ready:1/1
+      ├──□ slo-demo-554f85ff79-d857v  Pod         ✔ Running  2m52s  ready:1/1
+      ├──□ slo-demo-554f85ff79-h5kkm  Pod         ✔ Running  2m52s  ready:1/1
+      └──□ slo-demo-554f85ff79-q69ng  Pod         ✔ Running  2m52s  ready:1/1

@@ -1,0 +1,28 @@
+PHASE 1 — BASELINE (no chaos injected)
+
+================ slo-demo SLO status @ 2026-08-02T03:24:45Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   577.04
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             0.1000%
+  30m window                             0.1012%
+  1h  window                             0.1012%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.4835%
+  1h  window                             0.4834%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        0.20x
+  availability 6h                        0.20x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           0.80
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:24:47Z ===
+  (none — all SLO alerts inactive)

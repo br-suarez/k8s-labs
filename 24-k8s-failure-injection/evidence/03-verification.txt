@@ -1,0 +1,27 @@
+======================================================================
+ VERIFICATION
+======================================================================
+
+$ kubectl get pods -n k8s-refresher -o wide
+NAME                             READY   STATUS        RESTARTS   AGE    IP            NODE              NOMINATED NODE   READINESS GATES
+db-pending-694444945-cghxb       1/1     Running       0          16s    10.244.2.67   slo-lab-worker2   <none>           <none>
+db-pending-b6bdb56d4-kl5m5       1/1     Terminating   0          108s   10.244.2.68   slo-lab-worker2   <none>           <none>
+web-backend-796c44fc87-gq6wg     1/1     Running       0          109s   10.244.1.23   slo-lab-worker    <none>           <none>
+web-backend-796c44fc87-v88k5     1/1     Running       0          109s   10.244.2.64   slo-lab-worker2   <none>           <none>
+web-crashloop-5885f6c954-pjf9b   1/1     Running       0          24s    10.244.2.65   slo-lab-worker2   <none>           <none>
+
+$ kubectl get pvc -n k8s-refresher
+NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+data-fast   Bound    pvc-7d9644dd-9068-4804-bf2e-969fefb21b70   1Gi        RWO            standard       <unset>                 17s
+
+$ kubectl get endpoints -n k8s-refresher
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME          ENDPOINTS                       AGE
+web-badport   10.244.1.23:80,10.244.2.64:80   108s
+web-nosel     10.244.1.23:80,10.244.2.64:80   109s
+
+End-to-end check through both previously broken Services:
+
+$ kubectl run curl-verify -n k8s-refresher --rm -i --restart=Never --quiet --image=curlimages/curl:8.10.1 --timeout=90s -- sh -c for s in web-nosel web-badport; do printf "%-14s " "$s"; curl -s -m 5 -o /dev/null -w "http_code=%{http_code}\n" http://$s/ || echo FAILED; done
+web-nosel      http_code=200
+web-badport    http_code=200

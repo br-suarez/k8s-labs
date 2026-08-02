@@ -1,0 +1,20 @@
+# Normalize line endings.
+#
+# Git for Windows ships with core.autocrlf=true in its system config, so cloning
+# this repo on Windows checks every file out with CRLF. Any git that does not
+# share that setting — WSL, Linux CI, a container — then reports all of those
+# files as modified without a single byte of content having changed.
+#
+# Pinning eol=lf here makes the working tree match the repository regardless of
+# which git checks it out, and keeps shell scripts executable: a .sh file with
+# CRLF line endings fails with a confusing "bad interpreter: no such file or
+# directory" because the shebang line ends in a stray carriage return.
+* text=auto eol=lf
+
+# Binary files must never be touched.
+*.png binary
+*.jpg binary
+*.gif binary
+*.pdf binary
+*.gz  binary
+*.zip binary

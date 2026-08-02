@@ -1,0 +1,23 @@
+# kind cluster for the SLO lab.
+# Three nodes so Prometheus, Grafana and the demo app land on different nodes
+# and the lab exercises real scheduling rather than a single-node shortcut.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: slo-lab
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      # Grafana and Prometheus are reached with kubectl port-forward,
+      # but 30080 is mapped for the demo app NodePort so traffic can be
+      # generated from the host without holding a port-forward open.
+      - containerPort: 30080
+        hostPort: 30080
+        protocol: TCP
+  - role: worker
+  - role: worker

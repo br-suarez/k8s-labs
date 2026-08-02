@@ -1,0 +1,40 @@
+# Same application, same behaviour, without the build toolchain in production.
+#
+# The build stage is thrown away. Only what is explicitly COPY --from'd survives,
+# which inverts the default: instead of remembering to delete build artifacts,
+# nothing ships unless it is named.
+
+# ---------- stage 1: build ----------
+FROM node:22 AS build
+WORKDIR /app
+
+# package*.json FIRST, on its own layer. Dependencies change far less often than
+# source, so this layer stays cached across ordinary code edits — the exact
+# cache behaviour Dockerfile.naive destroys with `COPY . .`.
+COPY package*.json ./
+RUN npm ci
+
+COPY src ./src
+# esbuild bundles express into the output, so the runtime stage needs no
+# node_modules at all — not even production ones.
+RUN npm run build
+
+# ---------- stage 2: runtime ----------
+FROM node:22-alpine AS runtime
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# The bundle, and nothing else. No npm, no source, no devDependencies.
+COPY --from=build /app/dist ./dist
+
+# The app writes a startup marker, so the directory must be owned by the user
+# that will run — creating it as root and then switching user is the mistake
+# reproduced in Dockerfile.broken-perms.
+RUN mkdir -p /app/dist/data && chown -R node:node /app
+
+# node:22-alpine already ships an unprivileged `node` user (uid 1000).
+USER node
+
+EXPOSE 3000
+CMD ["node", "dist/server.js"]

@@ -1,0 +1,46 @@
+# Route the module 20 SLO alerts to the triage webhook.
+#
+# The AlertmanagerConfig CRD is namespaced, so a team can own its own routing
+# without editing a cluster-wide alertmanager.yaml — which is the usual reason
+# alert routing changes need a platform-team ticket and therefore never happen.
+#
+# The Alertmanager in this cluster has `alertmanagerConfigSelector: {}`, which
+# selects every AlertmanagerConfig in its own namespace. That is why this must
+# live in `monitoring`.
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: slo-triage
+  namespace: monitoring
+  labels:
+    app: triage-runner
+spec:
+  route:
+    receiver: "null"
+    # Group by alert AND service so two services burning at once produce two
+    # separate triage runs rather than one report about the wrong one.
+    groupBy: ["alertname", "service"]
+    groupWait: 10s
+    groupInterval: 1m
+    # 4h, deliberately long: a repeat notification would re-run triage and
+    # append a near-identical report. The first one is the useful one.
+    repeatInterval: 4h
+    routes:
+      - receiver: triage-webhook
+        matchers:
+          - name: service
+            value: slo-demo
+          - name: severity
+            value: critical
+        # continue lets the alert carry on to other routes (a real setup would
+        # also page a human) instead of being consumed here.
+        continue: true
+
+  receivers:
+    - name: "null"
+    - name: triage-webhook
+      webhookConfigs:
+        - url: http://triage-runner.monitoring.svc.cluster.local:9000/alert
+          # The receiver answers immediately and runs triage in a worker
+          # thread, so this timeout only covers the HTTP handshake.
+          sendResolved: false

@@ -1,0 +1,9 @@
+----- poll #1 @ 04:53:50Z --  phase=Paused  step=1  canary_weight=20%  max_so_far=20%
+----- poll #2 @ 04:54:07Z --  phase=Paused  step=1  canary_weight=20%  max_so_far=20%
+----- poll #3 @ 04:54:24Z --  phase=Paused  step=1  canary_weight=20%  max_so_far=20%
+----- poll #4 @ 04:54:40Z --  phase=Paused  step=1  canary_weight=20%  max_so_far=20%
+----- poll #5 @ 04:54:57Z --  phase=Paused  step=1  canary_weight=20%  max_so_far=20%
+----- poll #6 @ 04:55:13Z --  phase=Paused  step=1  canary_weight=20%  max_so_far=20%
+----- poll #7 @ 04:55:30Z --  phase=Paused  step=1  canary_weight=20%  max_so_far=20%
+----- poll #8 @ 04:55:46Z --  phase=Paused  step=1  canary_weight=20%  max_so_far=20%
+----- poll #9 @ 04:56:04Z --  phase=Degraded  step=0  canary_weight=0%  max_so_far=20%

@@ -1,0 +1,492 @@
+----- recovery poll #1 -----
+================ slo-demo SLO status @ 2026-08-02T03:28:52Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   590.12
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             24.0706%
+  30m window                             17.5961%
+  1h  window                             17.5961%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.4863%
+  1h  window                             0.4913%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        35.19x
+  availability 6h                        35.19x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           -34.19
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:28:52Z ===
+  [FIRING] SLODemoAvailabilityFastBurn
+      burn_rate=14.4x  windows=1h/5m  severity=critical
+      active since: 2026-08-02T03:26:28.448676698Z
+      value:        1.7596076298816213e-01
+  [PENDING] SLODemoAvailabilitySlowBurn
+      burn_rate=6x  windows=6h/30m  severity=critical
+      active since: 2026-08-02T03:25:43.448676698Z
+      value:        1.7596076298816213e-01
+  [PENDING] SLODemoAvailabilityBudgetDrain
+      burn_rate=3x  windows=1d/2h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.7596076298816213e-01
+  [PENDING] SLODemoAvailabilityChronicBurn
+      burn_rate=1x  windows=3d/6h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.7596076298816216e-01
+
+----- recovery poll #2 -----
+================ slo-demo SLO status @ 2026-08-02T03:29:39Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   580.42
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             28.8323%
+  30m window                             18.4741%
+  1h  window                             18.4741%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.4959%
+  1h  window                             0.4918%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        36.95x
+  availability 6h                        36.95x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           -35.95
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:29:41Z ===
+  [FIRING] SLODemoAvailabilityFastBurn
+      burn_rate=14.4x  windows=1h/5m  severity=critical
+      active since: 2026-08-02T03:26:28.448676698Z
+      value:        1.8474117557103914e-01
+  [PENDING] SLODemoAvailabilitySlowBurn
+      burn_rate=6x  windows=6h/30m  severity=critical
+      active since: 2026-08-02T03:25:43.448676698Z
+      value:        1.847411755710391e-01
+  [PENDING] SLODemoAvailabilityBudgetDrain
+      burn_rate=3x  windows=1d/2h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.847411755710391e-01
+  [PENDING] SLODemoAvailabilityChronicBurn
+      burn_rate=1x  windows=3d/6h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.8474117557103914e-01
+
+----- recovery poll #3 -----
+================ slo-demo SLO status @ 2026-08-02T03:30:28Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   585.04
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             29.6617%
+  30m window                             17.7939%
+  1h  window                             17.7939%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.5177%
+  1h  window                             0.4934%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        35.59x
+  availability 6h                        35.59x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           -34.59
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:30:29Z ===
+  [FIRING] SLODemoAvailabilityFastBurn
+      burn_rate=14.4x  windows=1h/5m  severity=critical
+      active since: 2026-08-02T03:26:28.448676698Z
+      value:        1.779389718690311e-01
+  [PENDING] SLODemoAvailabilitySlowBurn
+      burn_rate=6x  windows=6h/30m  severity=critical
+      active since: 2026-08-02T03:25:43.448676698Z
+      value:        1.779389718690311e-01
+  [PENDING] SLODemoAvailabilityBudgetDrain
+      burn_rate=3x  windows=1d/2h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.779389718690311e-01
+  [PENDING] SLODemoAvailabilityChronicBurn
+      burn_rate=1x  windows=3d/6h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.779389718690311e-01
+
+----- recovery poll #4 -----
+================ slo-demo SLO status @ 2026-08-02T03:31:16Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   586.94
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             22.8653%
+  30m window                             15.9302%
+  1h  window                             15.9302%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.5090%
+  1h  window                             0.4911%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        31.86x
+  availability 6h                        31.86x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           -30.86
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:31:16Z ===
+  [FIRING] SLODemoAvailabilityFastBurn
+      burn_rate=14.4x  windows=1h/5m  severity=critical
+      active since: 2026-08-02T03:26:28.448676698Z
+      value:        1.5930235690259834e-01
+  [PENDING] SLODemoAvailabilitySlowBurn
+      burn_rate=6x  windows=6h/30m  severity=critical
+      active since: 2026-08-02T03:25:43.448676698Z
+      value:        1.5930235690259836e-01
+  [PENDING] SLODemoAvailabilityBudgetDrain
+      burn_rate=3x  windows=1d/2h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.5930235690259836e-01
+  [PENDING] SLODemoAvailabilityChronicBurn
+      burn_rate=1x  windows=3d/6h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.5930235690259834e-01
+
+----- recovery poll #5 -----
+================ slo-demo SLO status @ 2026-08-02T03:32:04Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   568.24
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             18.9868%
+  30m window                             15.0587%
+  1h  window                             15.0587%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.5084%
+  1h  window                             0.4927%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        30.12x
+  availability 6h                        30.12x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           -29.12
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:32:05Z ===
+  [FIRING] SLODemoAvailabilityFastBurn
+      burn_rate=14.4x  windows=1h/5m  severity=critical
+      active since: 2026-08-02T03:26:28.448676698Z
+      value:        1.5058723561024606e-01
+  [PENDING] SLODemoAvailabilitySlowBurn
+      burn_rate=6x  windows=6h/30m  severity=critical
+      active since: 2026-08-02T03:25:43.448676698Z
+      value:        1.505872356102461e-01
+  [PENDING] SLODemoAvailabilityBudgetDrain
+      burn_rate=3x  windows=1d/2h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.505872356102461e-01
+  [PENDING] SLODemoAvailabilityChronicBurn
+      burn_rate=1x  windows=3d/6h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.505872356102461e-01
+
+----- recovery poll #6 -----
+================ slo-demo SLO status @ 2026-08-02T03:32:52Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   595.48
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             7.4745%
+  30m window                             12.9331%
+  1h  window                             12.9331%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.5041%
+  1h  window                             0.4935%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        25.87x
+  availability 6h                        25.87x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           -24.87
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:32:53Z ===
+  [FIRING] SLODemoAvailabilityFastBurn
+      burn_rate=14.4x  windows=1h/5m  severity=critical
+      active since: 2026-08-02T03:26:28.448676698Z
+      value:        1.2933119724913839e-01
+  [PENDING] SLODemoAvailabilitySlowBurn
+      burn_rate=6x  windows=6h/30m  severity=critical
+      active since: 2026-08-02T03:25:43.448676698Z
+      value:        1.2933119724913839e-01
+  [PENDING] SLODemoAvailabilityBudgetDrain
+      burn_rate=3x  windows=1d/2h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.2933119724913839e-01
+  [PENDING] SLODemoAvailabilityChronicBurn
+      burn_rate=1x  windows=3d/6h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.2933119724913836e-01
+
+----- recovery poll #7 -----
+================ slo-demo SLO status @ 2026-08-02T03:33:40Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   591.53
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             3.5673%
+  30m window                             12.3364%
+  1h  window                             12.3364%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.4855%
+  1h  window                             0.4882%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        24.67x
+  availability 6h                        24.67x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           -23.67
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:33:41Z ===
+  [PENDING] SLODemoAvailabilitySlowBurn
+      burn_rate=6x  windows=6h/30m  severity=critical
+      active since: 2026-08-02T03:25:43.448676698Z
+      value:        1.2336359374262139e-01
+  [PENDING] SLODemoAvailabilityBudgetDrain
+      burn_rate=3x  windows=1d/2h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.2336359374262139e-01
+  [PENDING] SLODemoAvailabilityChronicBurn
+      burn_rate=1x  windows=3d/6h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.2336359374262139e-01
+
+----- recovery poll #8 -----
+================ slo-demo SLO status @ 2026-08-02T03:34:28Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   591.80
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             0.0935%
+  30m window                             11.3081%
+  1h  window                             11.3081%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.4800%
+  1h  window                             0.4868%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        22.62x
+  availability 6h                        22.62x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           -21.62
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:34:29Z ===
+  [PENDING] SLODemoAvailabilitySlowBurn
+      burn_rate=6x  windows=6h/30m  severity=critical
+      active since: 2026-08-02T03:25:43.448676698Z
+      value:        1.1308096131192603e-01
+  [PENDING] SLODemoAvailabilityBudgetDrain
+      burn_rate=3x  windows=1d/2h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.1308096131192603e-01
+  [PENDING] SLODemoAvailabilityChronicBurn
+      burn_rate=1x  windows=3d/6h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.1308096131192605e-01
+
+----- recovery poll #9 -----
+================ slo-demo SLO status @ 2026-08-02T03:35:17Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   592.70
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             0.0944%
+  30m window                             10.8587%
+  1h  window                             10.8587%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.4661%
+  1h  window                             0.4836%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        21.72x
+  availability 6h                        21.72x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           -20.72
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:35:18Z ===
+  [PENDING] SLODemoAvailabilitySlowBurn
+      burn_rate=6x  windows=6h/30m  severity=critical
+      active since: 2026-08-02T03:25:43.448676698Z
+      value:        1.0858714586827353e-01
+  [PENDING] SLODemoAvailabilityBudgetDrain
+      burn_rate=3x  windows=1d/2h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.0858714586827353e-01
+  [PENDING] SLODemoAvailabilityChronicBurn
+      burn_rate=1x  windows=3d/6h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.0858714586827352e-01
+
+----- recovery poll #10 -----
+================ slo-demo SLO status @ 2026-08-02T03:36:05Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   572.55
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             0.0896%
+  30m window                             10.0645%
+  1h  window                             10.0645%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.4623%
+  1h  window                             0.4836%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        20.13x
+  availability 6h                        20.13x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           -19.13
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:36:07Z ===
+  [PENDING] SLODemoAvailabilitySlowBurn
+      burn_rate=6x  windows=6h/30m  severity=critical
+      active since: 2026-08-02T03:25:43.448676698Z
+      value:        1.006449547624802e-01
+  [PENDING] SLODemoAvailabilityBudgetDrain
+      burn_rate=3x  windows=1d/2h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.006449547624802e-01
+  [PENDING] SLODemoAvailabilityChronicBurn
+      burn_rate=1x  windows=3d/6h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.0064495476248021e-01
+
+----- recovery poll #11 -----
+================ slo-demo SLO status @ 2026-08-02T03:36:53Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   585.13
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             0.0955%
+  30m window                             9.5089%
+  1h  window                             9.5089%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.4585%
+  1h  window                             0.4823%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        19.02x
+  availability 6h                        19.02x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           -18.02
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:36:54Z ===
+  [PENDING] SLODemoAvailabilitySlowBurn
+      burn_rate=6x  windows=6h/30m  severity=critical
+      active since: 2026-08-02T03:25:43.448676698Z
+      value:        9.508867053245304e-02
+  [PENDING] SLODemoAvailabilityBudgetDrain
+      burn_rate=3x  windows=1d/2h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        9.508867053245304e-02
+  [PENDING] SLODemoAvailabilityChronicBurn
+      burn_rate=1x  windows=3d/6h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        9.508867053245304e-02
+
+----- recovery poll #12 -----
+================ slo-demo SLO status @ 2026-08-02T03:37:42Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   604.42
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             0.0982%
+  30m window                             9.2579%
+  1h  window                             9.2579%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.4541%
+  1h  window                             0.4802%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        18.52x
+  availability 6h                        18.52x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           -17.52
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:37:43Z ===
+  [PENDING] SLODemoAvailabilitySlowBurn
+      burn_rate=6x  windows=6h/30m  severity=critical
+      active since: 2026-08-02T03:25:43.448676698Z
+      value:        9.257851374428608e-02
+  [PENDING] SLODemoAvailabilityBudgetDrain
+      burn_rate=3x  windows=1d/2h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        9.257851374428608e-02
+  [PENDING] SLODemoAvailabilityChronicBurn
+      burn_rate=1x  windows=3d/6h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        9.257851374428609e-02
+

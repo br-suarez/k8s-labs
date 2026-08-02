@@ -1,0 +1,51 @@
+======================================================================
+ FIXES
+======================================================================
+
+========== FIX 1 — correct the nginx directive, then roll the Deployment ==========
+
+$ kubectl apply -f fixed/01-crashloop-fixed.yaml
+configmap/nginx-config configured
+
+A ConfigMap change does not restart consumers, and a subPath mount does not
+even refresh the file in the running container. The rollout is mandatory:
+
+$ kubectl rollout restart deploy/web-crashloop -n k8s-refresher
+deployment.apps/web-crashloop restarted
+
+$ kubectl rollout status deploy/web-crashloop -n k8s-refresher --timeout=120s
+Waiting for deployment "web-crashloop" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "web-crashloop" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "web-crashloop" rollout to finish: 1 old replicas are pending termination...
+deployment "web-crashloop" successfully rolled out
+
+========== FIX 2 — matching selector and named targetPort ==========
+
+$ kubectl apply -f fixed/02-service-fixed.yaml
+service/web-nosel configured
+service/web-badport configured
+
+$ kubectl get endpoints -n k8s-refresher web-nosel web-badport
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME          ENDPOINTS                       AGE
+web-nosel     10.244.1.23:80,10.244.2.64:80   92s
+web-badport   10.244.1.23:80,10.244.2.64:80   91s
+
+========== FIX 3 — recreate the PVC with an existing StorageClass ==========
+
+storageClassName cannot be patched; the PVC must be replaced.
+
+$ kubectl delete pvc -n k8s-refresher data-fast --wait=true
+persistentvolumeclaim "data-fast" deleted from k8s-refresher namespace
+
+$ kubectl apply -f fixed/03-pvc-fixed.yaml
+persistentvolumeclaim/data-fast created
+
+$ kubectl rollout restart deploy/db-pending -n k8s-refresher
+deployment.apps/db-pending restarted
+
+$ kubectl rollout status deploy/db-pending -n k8s-refresher --timeout=120s
+Waiting for deployment "db-pending" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "db-pending" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "db-pending" rollout to finish: 1 old replicas are pending termination...
+deployment "db-pending" successfully rolled out

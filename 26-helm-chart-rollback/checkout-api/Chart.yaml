@@ -1,0 +1,14 @@
+apiVersion: v2
+name: checkout-api
+description: A deliberately small chart for practising upgrade and rollback mechanics.
+type: application
+
+# version   = the chart's own version. Bumped when the TEMPLATES change.
+# appVersion = the default version of the application being deployed. Bumped
+#              when the IMAGE changes.
+#
+# They are independent on purpose, and conflating them is a common source of
+# confusion: shipping a template fix without touching the app should move
+# `version` only.
+version: 0.1.0
+appVersion: "v1"

@@ -1,0 +1,58 @@
+# Three Services, each with a distinct job.
+#
+# Argo Rollouts rewrites the selectors of the canary and stable Services on
+# every rollout, appending the pod-template-hash of the relevant ReplicaSet.
+# That is what makes it possible to measure ONLY the new version — without the
+# split, every query would average the canary in with the healthy stable pods.
+---
+# Traffic entrypoint. Selects every pod of the Rollout regardless of version,
+# so the replica ratio set by `setWeight` is what actually splits user traffic.
+apiVersion: v1
+kind: Service
+metadata:
+  name: slo-demo
+  namespace: canary-demo
+  labels:
+    app: slo-demo
+    role: root
+spec:
+  selector:
+    app: slo-demo
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+# Canary-only. Selector is managed by Argo Rollouts — do not add the hash here.
+apiVersion: v1
+kind: Service
+metadata:
+  name: slo-demo-canary
+  namespace: canary-demo
+  labels:
+    app: slo-demo
+    role: canary
+spec:
+  selector:
+    app: slo-demo
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+# Stable-only, used as the comparison baseline.
+apiVersion: v1
+kind: Service
+metadata:
+  name: slo-demo-stable
+  namespace: canary-demo
+  labels:
+    app: slo-demo
+    role: stable
+spec:
+  selector:
+    app: slo-demo
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

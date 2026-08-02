@@ -1,0 +1,24 @@
+# FIX 1 — correct the directive name.
+#
+# Only the ConfigMap changes. Note that editing a ConfigMap does NOT restart the
+# pods that consume it: with subPath mounts the file is not even updated in the
+# running container. The Deployment has to be rolled.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: k8s-refresher
+data:
+  nginx.conf: |
+    worker_processes auto;
+    events {
+      worker_connections 1024;
+    }
+    http {
+      server {
+        listen 80;
+        location / {
+          return 200 'ok\n';
+        }
+      }
+    }

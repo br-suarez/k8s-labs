@@ -1,0 +1,185 @@
+# Recording rules that turn raw counters into SLI error ratios.
+#
+# Why record instead of querying inline: the burn-rate alerts below need the
+# same ratio over 7 different windows. Evaluating those aggregations once and
+# storing the result keeps alert evaluation cheap and — more importantly —
+# guarantees the alert and the dashboard are reading the *same* definition of
+# the SLI. A dashboard that disagrees with the alert is how incidents get
+# argued about instead of fixed.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: slo-demo-sli-rules
+  namespace: monitoring
+  labels:
+    app: slo-demo
+    role: slo-rules
+spec:
+  groups:
+    # ------------------------------------------------------------------
+    # Availability SLI — error ratio (fraction of requests that are 5xx)
+    # ------------------------------------------------------------------
+    - name: slo-demo.availability.sli
+      interval: 30s
+      rules:
+        - record: slo:availability_error:ratio_rate5m
+          expr: |
+            sum(rate(http_requests_total{job="slo-demo",path="/api",status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{job="slo-demo",path="/api"}[5m]))
+          labels:
+            service: slo-demo
+
+        - record: slo:availability_error:ratio_rate30m
+          expr: |
+            sum(rate(http_requests_total{job="slo-demo",path="/api",status=~"5.."}[30m]))
+            /
+            sum(rate(http_requests_total{job="slo-demo",path="/api"}[30m]))
+          labels:
+            service: slo-demo
+
+        - record: slo:availability_error:ratio_rate1h
+          expr: |
+            sum(rate(http_requests_total{job="slo-demo",path="/api",status=~"5.."}[1h]))
+            /
+            sum(rate(http_requests_total{job="slo-demo",path="/api"}[1h]))
+          labels:
+            service: slo-demo
+
+        - record: slo:availability_error:ratio_rate2h
+          expr: |
+            sum(rate(http_requests_total{job="slo-demo",path="/api",status=~"5.."}[2h]))
+            /
+            sum(rate(http_requests_total{job="slo-demo",path="/api"}[2h]))
+          labels:
+            service: slo-demo
+
+        - record: slo:availability_error:ratio_rate6h
+          expr: |
+            sum(rate(http_requests_total{job="slo-demo",path="/api",status=~"5.."}[6h]))
+            /
+            sum(rate(http_requests_total{job="slo-demo",path="/api"}[6h]))
+          labels:
+            service: slo-demo
+
+        - record: slo:availability_error:ratio_rate1d
+          expr: |
+            sum(rate(http_requests_total{job="slo-demo",path="/api",status=~"5.."}[1d]))
+            /
+            sum(rate(http_requests_total{job="slo-demo",path="/api"}[1d]))
+          labels:
+            service: slo-demo
+
+        - record: slo:availability_error:ratio_rate3d
+          expr: |
+            sum(rate(http_requests_total{job="slo-demo",path="/api",status=~"5.."}[3d]))
+            /
+            sum(rate(http_requests_total{job="slo-demo",path="/api"}[3d]))
+          labels:
+            service: slo-demo
+
+    # ------------------------------------------------------------------
+    # Latency SLI — error ratio (fraction of requests SLOWER than 300ms)
+    #
+    # The le="0.3" bucket is cumulative: it counts every request at or under
+    # 300ms. Dividing it by the total count gives the "good" ratio, so the
+    # error ratio is 1 minus that. This works only because 0.3 is a real
+    # bucket boundary in the histogram — see app/src/main.go.
+    # ------------------------------------------------------------------
+    - name: slo-demo.latency.sli
+      interval: 30s
+      rules:
+        - record: slo:latency_error:ratio_rate5m
+          expr: |
+            1 - (
+              sum(rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api",le="0.3"}[5m]))
+              /
+              sum(rate(http_request_duration_seconds_count{job="slo-demo",path="/api"}[5m]))
+            )
+          labels:
+            service: slo-demo
+
+        - record: slo:latency_error:ratio_rate30m
+          expr: |
+            1 - (
+              sum(rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api",le="0.3"}[30m]))
+              /
+              sum(rate(http_request_duration_seconds_count{job="slo-demo",path="/api"}[30m]))
+            )
+          labels:
+            service: slo-demo
+
+        - record: slo:latency_error:ratio_rate1h
+          expr: |
+            1 - (
+              sum(rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api",le="0.3"}[1h]))
+              /
+              sum(rate(http_request_duration_seconds_count{job="slo-demo",path="/api"}[1h]))
+            )
+          labels:
+            service: slo-demo
+
+        - record: slo:latency_error:ratio_rate6h
+          expr: |
+            1 - (
+              sum(rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api",le="0.3"}[6h]))
+              /
+              sum(rate(http_request_duration_seconds_count{job="slo-demo",path="/api"}[6h]))
+            )
+          labels:
+            service: slo-demo
+
+    # ------------------------------------------------------------------
+    # Error budget and burn rate — the numbers a human reads on a dashboard
+    # ------------------------------------------------------------------
+    - name: slo-demo.error-budget
+      interval: 30s
+      rules:
+        # The SLO targets, recorded as series. Putting the target in a metric
+        # rather than hardcoding 0.005 in twelve places means the SLO can be
+        # renegotiated by editing one line.
+        - record: slo:availability:target
+          expr: vector(0.995)
+          labels:
+            service: slo-demo
+        - record: slo:latency:target
+          expr: vector(0.99)
+          labels:
+            service: slo-demo
+
+        # Burn rate = observed error ratio / error budget ratio.
+        # 1 = spending the budget exactly evenly across the window.
+        - record: slo:availability_burn_rate:1h
+          expr: slo:availability_error:ratio_rate1h{service="slo-demo"} / 0.005
+          labels:
+            service: slo-demo
+        - record: slo:availability_burn_rate:6h
+          expr: slo:availability_error:ratio_rate6h{service="slo-demo"} / 0.005
+          labels:
+            service: slo-demo
+
+        # Fraction of the 28-day budget still unspent. Negative means the SLO
+        # is already missed for this window.
+        #
+        # NOTE: a 28d range needs 28d of retention. This lab runs Prometheus
+        # with 6h retention (monitoring/kube-prom-stack-values.yaml), so this
+        # rule returns no data here — it is the production-correct form, kept
+        # deliberately. The 6h proxy below is what the lab actually observes.
+        - record: slo:availability_error_budget_remaining:ratio28d
+          expr: |
+            1 - (
+              (
+                sum(rate(http_requests_total{job="slo-demo",path="/api",status=~"5.."}[28d]))
+                /
+                sum(rate(http_requests_total{job="slo-demo",path="/api"}[28d]))
+              ) / 0.005
+            )
+          labels:
+            service: slo-demo
+
+        # Lab-scale proxy over 6h, so the budget gauge shows real movement
+        # within a lab session.
+        - record: slo:availability_error_budget_remaining:ratio6h
+          expr: 1 - (slo:availability_error:ratio_rate6h{service="slo-demo"} / 0.005)
+          labels:
+            service: slo-demo

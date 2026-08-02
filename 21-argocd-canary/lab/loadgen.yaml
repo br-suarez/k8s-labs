@@ -1,0 +1,44 @@
+# Traffic for the canary lab.
+#
+# Applied directly with kubectl, deliberately NOT part of the synced Git repo:
+# it is test scaffolding, not part of the application. Keeping it out of the
+# repo also keeps the Argo CD diff honest — the Application shows exactly the
+# resources that make up the service, and nothing else.
+#
+# Traffic hits the root Service, which selects stable AND canary pods, so the
+# replica ratio set by `setWeight` is what actually splits requests.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadgen
+  namespace: canary-demo
+  labels:
+    app: loadgen
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: loadgen
+  template:
+    metadata:
+      labels:
+        app: loadgen
+    spec:
+      containers:
+        - name: loadgen
+          image: curlimages/curl:8.10.1
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "loadgen starting against http://slo-demo:8080/api"
+              while true; do
+                curl -s -Z --parallel-max 16 --max-time 10 \
+                  "http://slo-demo:8080/api?i=[1-200]" > /dev/null 2>&1 || true
+              done
+          resources:
+            requests:
+              cpu: 100m
+              memory: 32Mi
+            limits:
+              memory: 64Mi

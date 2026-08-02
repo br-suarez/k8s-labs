@@ -1,0 +1,70 @@
+---
+# The idempotent version. Same end state, but every task describes the DESIRED
+# state rather than the action to take — so running it twice changes nothing the
+# second time, and `changed` becomes a signal worth reading.
+- name: Configure web servers (idempotent)
+  hosts: webservers
+  gather_facts: true
+
+  vars:
+    app_listen_port: 8080
+    app_log_level: info
+    app_workers: 4
+
+  tasks:
+    # `apt` knows what is installed. It only acts when reality differs.
+    # cache_valid_time avoids re-running apt-get update on every play while
+    # still refreshing it when the cache is genuinely stale.
+    - name: Install nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    # `user` with state: present is a no-op when the user already exists.
+    # The naive version's `useradd` fails with exit 9 on the second run.
+    - name: Add the application user
+      ansible.builtin.user:
+        name: appuser
+        shell: /bin/bash
+        create_home: true
+        state: present
+
+    # `lineinfile` is declarative: "this line should be present, exactly once".
+    # Ten runs produce one line, not ten.
+    - name: Register this deploy in the motd
+      ansible.builtin.lineinfile:
+        path: /etc/motd
+        line: "deployed by ansible"
+        state: present
+        create: true
+        mode: "0644"
+
+    # `template` compares the rendered content against what is on disk and only
+    # writes when they differ — which is also what makes `--diff` useful.
+    - name: Write the app config
+      ansible.builtin.template:
+        src: app.conf.j2
+        dest: /etc/app.conf
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload app config
+
+    # Some things genuinely have no state to inspect. `creates:` gives a
+    # command a completion marker so it runs once rather than every time —
+    # the escape hatch for when no declarative module exists.
+    - name: Run one-time database seed
+      ansible.builtin.command: touch /var/lib/app-seeded
+      args:
+        creates: /var/lib/app-seeded
+
+  handlers:
+    # Handlers only fire when a task actually reported `changed`, which is only
+    # meaningful because the tasks above are honest about when they change
+    # something. In the naive playbook every task reports changed, so a handler
+    # would restart the service on every single run.
+    - name: Reload app config
+      ansible.builtin.debug:
+        msg: "config changed — would reload the service here"

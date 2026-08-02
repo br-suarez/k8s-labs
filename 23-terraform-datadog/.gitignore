@@ -1,0 +1,11 @@
+# Terraform state contains the full attributes of every managed resource —
+# including any secret the provider read. It is never committed.
+*.tfstate
+*.tfstate.*
+.terraform/
+crash.log
+
+# The lock file SHOULD be committed in a real project: it pins provider hashes
+# so every machine and every CI run resolves identical versions. Excluded here
+# only because this lab regenerates it from scratch on every run.
+.terraform.lock.hcl

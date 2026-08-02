@@ -1,0 +1,115 @@
+# A minimal in-cluster Git server, so this lab has a real GitOps source of truth
+# without depending on a personal GitHub account.
+#
+# Why this exists: Argo CD pulls from a Git URL — there is no "apply this local
+# folder" mode. Pointing the lab at a public GitHub repo would mean anyone
+# reproducing it needs push access to *their own* fork before the rollback
+# demo works. A git daemon in the cluster keeps the whole lab self-contained:
+# clone the repo, run the scripts, everything works.
+#
+# `--enable=receive-pack` allows anonymous pushes. That is exactly what you must
+# never do on a real Git server; it is safe here only because this daemon is
+# reachable solely inside a throwaway kind cluster and via port-forward.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: git-server
+---
+# A PVC rather than an emptyDir: commits pushed during the lab must survive a
+# pod restart, otherwise Argo CD would suddenly be syncing from a repo whose
+# history vanished. kind ships the local-path provisioner by default.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: git-data
+  namespace: git-server
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: git-server
+  namespace: git-server
+  labels:
+    app: git-server
+spec:
+  replicas: 1
+  # The PVC is ReadWriteOnce and git daemon writes to it, so two pods must never
+  # run at once — Recreate stops the rolling update from briefly scheduling a
+  # second pod that cannot mount the volume.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: git-server
+  template:
+    metadata:
+      labels:
+        app: git-server
+    spec:
+      # The image runs as uid 1000; fsGroup makes the local-path PVC group-owned
+      # by 1000 so the daemon can actually write to it.
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+        # Idempotent: `git init --bare` on an existing repo is safe, but the
+        # test keeps the intent obvious and avoids touching an existing history.
+        - name: init-repo
+          image: git-server:v1
+          imagePullPolicy: Never
+          # Override the image's git-daemon ENTRYPOINT for the init step.
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              if [ -d /srv/git/gitops.git ]; then
+                echo "repo already exists, leaving history alone"
+              else
+                echo "creating bare repo /srv/git/gitops.git"
+                git init --bare --initial-branch=main /srv/git/gitops.git
+              fi
+              ls -la /srv/git/gitops.git
+          volumeMounts:
+            - name: git-data
+              mountPath: /srv/git
+      containers:
+        - name: git-daemon
+          image: git-server:v1
+          imagePullPolicy: Never
+          # No command override: the image ENTRYPOINT is already the daemon.
+          ports:
+            - name: git
+              containerPort: 9418
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+          volumeMounts:
+            - name: git-data
+              mountPath: /srv/git
+      volumes:
+        - name: git-data
+          persistentVolumeClaim:
+            claimName: git-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: git-server
+  namespace: git-server
+spec:
+  selector:
+    app: git-server
+  ports:
+    - name: git
+      port: 9418
+      targetPort: git

@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: slo-demo
+  namespace: slo-demo
+  labels:
+    app: slo-demo
+spec:
+  selector:
+    matchLabels:
+      app: slo-demo
+  # The Service lives in slo-demo but Prometheus runs in monitoring. The
+  # operator needs to be told which namespaces to look in; without this it
+  # only searches the ServiceMonitor's own namespace for matching Services.
+  namespaceSelector:
+    matchNames:
+      - slo-demo
+  endpoints:
+    # Must match the *named* port on the Service, not the container port.
+    - port: http
+      path: /metrics
+      interval: 15s

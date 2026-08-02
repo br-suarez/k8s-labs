@@ -1,0 +1,47 @@
+BLAST RADIUS RETEST RESULT
+
+maximum canary weight reached before abort: 20%
+(previous run with a 90s pause reached 60%)
+
+Name:            slo-demo
+Namespace:       canary-demo
+Status:          ✖ Degraded
+Message:         RolloutAborted: Rollout aborted update to revision 6: Background analysis phase error/failed: Metric "availability-sli" assessed Failed due to failed (3) > failureLimit (2)
+Strategy:        Canary
+  Step:          0/5
+  SetWeight:     0
+  ActualWeight:  0
+Images:          slo-demo:v3-fixed (stable)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       0
+  Ready:         5
+  Available:     5
+
+NAME                                  KIND         STATUS        AGE    INFO
+⟳ slo-demo                            Rollout      ✖ Degraded    20m    
+├──# revision:6                                                         
+│  ├──⧉ slo-demo-6c48cb6478           ReplicaSet   • ScaledDown  17m    canary
+│  └──α slo-demo-6c48cb6478-6         AnalysisRun  ✖ Failed      2m20s  ✖ 3
+├──# revision:5                                                         
+│  └──⧉ slo-demo-6dc7595f6d           ReplicaSet   ✔ Healthy     15m    stable
+│     ├──□ slo-demo-6dc7595f6d-6tkx6  Pod          ✔ Running     15m    ready:1/1
+│     ├──□ slo-demo-6dc7595f6d-s6jfc  Pod          ✔ Running     13m    ready:1/1
+│     ├──□ slo-demo-6dc7595f6d-s9jxb  Pod          ✔ Running     13m    ready:1/1
+│     ├──□ slo-demo-6dc7595f6d-z5dzg  Pod          ✔ Running     12m    ready:1/1
+│     └──□ slo-demo-6dc7595f6d-c279d  Pod          ✔ Running     17s    ready:1/1
+├──# revision:4                                                         
+│  └──α slo-demo-6c48cb6478-4         AnalysisRun  ✖ Failed      8m5s   ✖ 3
+├──# revision:3                                                         
+│  └──α slo-demo-6dc7595f6d-3         AnalysisRun  ✔ Successful  15m    ✔ 5
+├──# revision:2                                                         
+│  └──α slo-demo-6c48cb6478-2         AnalysisRun  ✖ Failed      17m    ✖ 3
+└──# revision:1                                                         
+   └──⧉ slo-demo-554f85ff79           ReplicaSet   • ScaledDown  20m    
+
+measurements:
+  metric=availability-sli phase=Failed successful=0 failed=3
+    [Failed] value=[0.1969283184646252]  at 2026-08-02T04:54:46Z
+    [Failed] value=[0.2109858130229174]  at 2026-08-02T04:55:17Z
+    [Failed] value=[0.20417853751187084]  at 2026-08-02T04:55:47Z

@@ -1,0 +1,294 @@
+======================================================================
+ ANSIBLE IDEMPOTENCY
+ date: 2026-08-02T06:13:05Z
+======================================================================
+
+========== Syntax check and inventory ==========
+
+$ ansible-inventory --list --yaml
+all:
+  children:
+    webservers:
+      hosts:
+        web01:
+          ansible_connection: community.docker.docker
+          ansible_python_interpreter: /usr/bin/python3
+          ansible_user: root
+        web02:
+          ansible_connection: community.docker.docker
+          ansible_python_interpreter: /usr/bin/python3
+          ansible_user: root
+
+$ ansible-playbook playbook.yml --syntax-check
+
+playbook: playbook.yml
+
+$ ansible all -m ping
+web02 | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+web01 | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+
+========== NAIVE PLAYBOOK — run 1 (clean hosts) ==========
+
+TASK [Gathering Facts] *********************************************************
+ok: [web02]
+ok: [web01]
+
+TASK [Install nginx] ***********************************************************
+changed: [web02]
+changed: [web01]
+
+TASK [Add the application user] ************************************************
+changed: [web01]
+changed: [web02]
+
+TASK [Register this deploy in the motd] ****************************************
+changed: [web01]
+changed: [web02]
+
+TASK [Write the app config] ****************************************************
+changed: [web01]
+changed: [web02]
+
+PLAY RECAP *********************************************************************
+web01                      : ok=5    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+web02                      : ok=5    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+========== NAIVE PLAYBOOK — run 2 (nothing should need doing) ==========
+fatal: [web02]: FAILED! => changed=true 
+  cmd: useradd -m -s /bin/bash appuser
+  delta: '0:00:00.004336'
+  end: '2026-08-02 06:13:41.024103'
+  msg: non-zero return code
+  rc: 9
+  start: '2026-08-02 06:13:41.019767'
+  stderr: 'useradd: user ''appuser'' already exists'
+  stderr_lines: <omitted>
+  stdout: ''
+  stdout_lines: <omitted>
+...ignoring
+
+TASK [Register this deploy in the motd] ****************************************
+changed: [web01]
+changed: [web02]
+
+TASK [Write the app config] ****************************************************
+changed: [web01]
+changed: [web02]
+
+PLAY RECAP *********************************************************************
+web01                      : ok=5    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=1   
+web02                      : ok=5    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=1   
+
+
+========== What two runs of the naive playbook actually did ==========
+
+/etc/motd after two runs — the line was appended twice:
+
+$ docker exec web01 cat /etc/motd
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+deployed by ansible
+deployed by ansible
+
+The user task failed on the second run (ignore_errors hid it):
+
+$ docker exec web01 id appuser
+uid=1000(appuser) gid=1000(appuser) groups=1000(appuser)
+
+Resetting hosts to a clean state for a fair comparison...
+
+========== IDEMPOTENT PLAYBOOK — run 1 (clean hosts) ==========
+TASK [Install nginx] ***********************************************************
+changed: [web01]
+changed: [web02]
+
+TASK [Add the application user] ************************************************
+changed: [web02]
+changed: [web01]
+
+TASK [Register this deploy in the motd] ****************************************
+changed: [web02]
+changed: [web01]
+
+TASK [Write the app config] ****************************************************
+changed: [web01]
+changed: [web02]
+
+TASK [Run one-time database seed] **********************************************
+changed: [web01]
+changed: [web02]
+
+RUNNING HANDLER [Reload app config] ********************************************
+ok: [web01] => 
+  msg: config changed — would reload the service here
+ok: [web02] => 
+  msg: config changed — would reload the service here
+
+PLAY RECAP *********************************************************************
+web01                      : ok=7    changed=5    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+web02                      : ok=7    changed=5    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+========== IDEMPOTENT PLAYBOOK — run 2 (this is the test) ==========
+
+A correct playbook reports changed=0 here. Anything else is a task lying about
+whether it did something.
+PLAY [Configure web servers (idempotent)] **************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [web01]
+ok: [web02]
+
+TASK [Install nginx] ***********************************************************
+ok: [web02]
+ok: [web01]
+
+TASK [Add the application user] ************************************************
+ok: [web02]
+ok: [web01]
+
+TASK [Register this deploy in the motd] ****************************************
+ok: [web01]
+ok: [web02]
+
+TASK [Write the app config] ****************************************************
+ok: [web01]
+ok: [web02]
+
+TASK [Run one-time database seed] **********************************************
+ok: [web02]
+ok: [web01]
+
+PLAY RECAP *********************************************************************
+web01                      : ok=6    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+web02                      : ok=6    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+========== State after two runs ==========
+
+/etc/motd — one line, not two:
+
+$ docker exec web01 cat /etc/motd
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+deployed by ansible
+
+$ docker exec web01 cat /etc/app.conf
+# Managed by Ansible — manual edits will be overwritten.
+# Rendered for web01 on Debian 12.15
+listen_port=8080
+log_level=info
+workers=4
+
+$ docker exec web01 id appuser
+uid=1000(appuser) gid=1000(appuser) groups=1000(appuser)
+
+$ docker exec web01 ls -la /var/lib/app-seeded
+-rw-r--r-- 1 root root 0 Aug  2 06:14 /var/lib/app-seeded
+
+========== --check --diff — what WOULD change, without changing it ==========
+
+Only possible because the modules are declarative: they can compare desired
+state against reality without applying anything. The naive playbook's shell
+tasks cannot do this at all — a shell command has no dry run.
+
+$ docker exec web01 sh -c sed -i 's/log_level=info/log_level=debug/' /etc/app.conf
+
+$ ansible-playbook playbook.yml --check --diff
+
+PLAY [Configure web servers (idempotent)] **************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [web02]
+ok: [web01]
+
+TASK [Install nginx] ***********************************************************
+ok: [web02]
+ok: [web01]
+
+TASK [Add the application user] ************************************************
+ok: [web02]
+ok: [web01]
+
+TASK [Register this deploy in the motd] ****************************************
+ok: [web01]
+ok: [web02]
+
+TASK [Write the app config] ****************************************************
+ok: [web02]
+--- before: /etc/app.conf
++++ after: /home/br_suarez/.ansible/tmp/ansible-local-220228jig5a6gu/tmpkxel6t8b/app.conf.j2
+@@ -1,5 +1,5 @@
+ # Managed by Ansible — manual edits will be overwritten.
+ # Rendered for web01 on Debian 12.15
+ listen_port=8080
+-log_level=debug
++log_level=info
+ workers=4
+
+changed: [web01]
+
+TASK [Run one-time database seed] **********************************************
+ok: [web01]
+ok: [web02]
+
+RUNNING HANDLER [Reload app config] ********************************************
+ok: [web01] => 
+  msg: config changed — would reload the service here
+
+PLAY RECAP *********************************************************************
+web01                      : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+web02                      : ok=6    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+The host was NOT modified by --check:
+
+$ docker exec web01 grep log_level /etc/app.conf
+log_level=debug
+
+========== Applying for real reverts the manual edit ==========
+ok: [web02]
+--- before: /etc/app.conf
++++ after: /home/br_suarez/.ansible/tmp/ansible-local-223535fuz268lr/tmphhzw4es3/app.conf.j2
+@@ -1,5 +1,5 @@
+ # Managed by Ansible — manual edits will be overwritten.
+ # Rendered for web01 on Debian 12.15
+ listen_port=8080
+-log_level=debug
++log_level=info
+ workers=4
+
+changed: [web01]
+
+TASK [Run one-time database seed] **********************************************
+ok: [web02]
+ok: [web01]
+
+RUNNING HANDLER [Reload app config] ********************************************
+ok: [web01] => 
+  msg: config changed — would reload the service here
+
+PLAY RECAP *********************************************************************
+web01                      : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+web02                      : ok=6    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+$ docker exec web01 grep log_level /etc/app.conf
+log_level=info

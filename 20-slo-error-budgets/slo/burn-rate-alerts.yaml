@@ -1,0 +1,158 @@
+# Multi-window, multi-burn-rate alerts (Google SRE Workbook, ch. 5).
+#
+# Every alert pairs a LONG window with a SHORT window:
+#   - the long window decides whether the burn is significant
+#   - the short window decides whether it is still happening
+#
+# Without the short window an alert stays firing long after the incident is
+# over, because a 1h rate() takes a full hour to decay. Without the long window
+# a single bad 30 seconds pages someone. Both conditions must hold.
+#
+# Thresholds are `burn_rate x error_budget`, e.g. 14.4 x 0.005 = 0.072 (7.2%
+# of requests failing). See slo/slo-definition.md section 5 for the table.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: slo-demo-burn-rate-alerts
+  namespace: monitoring
+  labels:
+    app: slo-demo
+    role: slo-alerts
+spec:
+  groups:
+    - name: slo-demo.availability.burnrate
+      rules:
+        # ---- PAGE: 14.4x over 1h + 5m -> whole 28d budget gone in ~2 days ----
+        - alert: SLODemoAvailabilityFastBurn
+          expr: |
+            (
+              slo:availability_error:ratio_rate1h{service="slo-demo"} > (14.4 * 0.005)
+              and
+              slo:availability_error:ratio_rate5m{service="slo-demo"} > (14.4 * 0.005)
+            )
+          # 2m, not 0m: enough to survive a single bad scrape, short enough that
+          # a real 14.4x burn is still caught within minutes.
+          for: 2m
+          labels:
+            severity: critical
+            slo: availability
+            service: slo-demo
+            long_window: 1h
+            short_window: 5m
+            burn_rate: "14.4"
+          annotations:
+            summary: "slo-demo is burning its availability error budget 14.4x too fast"
+            description: >-
+              {{ $value | humanizePercentage }} of /api requests are returning 5xx over the
+              last hour (and still failing over the last 5m). At this rate the entire 28-day
+              error budget is exhausted in under 2 days.
+            runbook_url: "https://github.com/br-suarez/k8s-labs/blob/main/20-slo-error-budgets/README.md#runbook"
+
+        # ---- PAGE: 6x over 6h + 30m -> budget gone in ~4.7 days ----
+        - alert: SLODemoAvailabilitySlowBurn
+          expr: |
+            (
+              slo:availability_error:ratio_rate6h{service="slo-demo"} > (6 * 0.005)
+              and
+              slo:availability_error:ratio_rate30m{service="slo-demo"} > (6 * 0.005)
+            )
+          for: 15m
+          labels:
+            severity: critical
+            slo: availability
+            service: slo-demo
+            long_window: 6h
+            short_window: 30m
+            burn_rate: "6"
+          annotations:
+            summary: "slo-demo is burning its availability error budget 6x too fast"
+            description: >-
+              {{ $value | humanizePercentage }} of /api requests failing over 6h. Sustained,
+              this consumes ~5% of the 28-day budget and exhausts it in under 5 days.
+
+        # ---- TICKET: 3x over 1d + 2h -> not worth waking anyone ----
+        - alert: SLODemoAvailabilityBudgetDrain
+          expr: |
+            (
+              slo:availability_error:ratio_rate1d{service="slo-demo"} > (3 * 0.005)
+              and
+              slo:availability_error:ratio_rate2h{service="slo-demo"} > (3 * 0.005)
+            )
+          for: 1h
+          labels:
+            severity: warning
+            slo: availability
+            service: slo-demo
+            long_window: 1d
+            short_window: 2h
+            burn_rate: "3"
+          annotations:
+            summary: "slo-demo availability budget draining 3x too fast"
+            description: >-
+              Sustained low-grade failure. Create a ticket; this does not warrant a page,
+              but at 3x the budget is gone in ~9 days.
+
+        # ---- TICKET: 1x over 3d + 6h -> chronic underperformance ----
+        - alert: SLODemoAvailabilityChronicBurn
+          expr: |
+            (
+              slo:availability_error:ratio_rate3d{service="slo-demo"} > (1 * 0.005)
+              and
+              slo:availability_error:ratio_rate6h{service="slo-demo"} > (1 * 0.005)
+            )
+          for: 3h
+          labels:
+            severity: warning
+            slo: availability
+            service: slo-demo
+            long_window: 3d
+            short_window: 6h
+            burn_rate: "1"
+          annotations:
+            summary: "slo-demo is on track to exactly exhaust its error budget"
+            description: >-
+              The service is chronically at the edge of its SLO. Nothing is on fire, but
+              there is no margin left for a real incident.
+
+    - name: slo-demo.latency.burnrate
+      rules:
+        - alert: SLODemoLatencyFastBurn
+          expr: |
+            (
+              slo:latency_error:ratio_rate1h{service="slo-demo"} > (14.4 * 0.01)
+              and
+              slo:latency_error:ratio_rate5m{service="slo-demo"} > (14.4 * 0.01)
+            )
+          for: 2m
+          labels:
+            severity: critical
+            slo: latency
+            service: slo-demo
+            long_window: 1h
+            short_window: 5m
+            burn_rate: "14.4"
+          annotations:
+            summary: "slo-demo is burning its latency error budget 14.4x too fast"
+            description: >-
+              {{ $value | humanizePercentage }} of /api requests are slower than 300ms over
+              the last hour. Budget target is 1%; this exhausts 28 days of budget in ~2 days.
+
+        - alert: SLODemoLatencySlowBurn
+          expr: |
+            (
+              slo:latency_error:ratio_rate6h{service="slo-demo"} > (6 * 0.01)
+              and
+              slo:latency_error:ratio_rate30m{service="slo-demo"} > (6 * 0.01)
+            )
+          for: 15m
+          labels:
+            severity: critical
+            slo: latency
+            service: slo-demo
+            long_window: 6h
+            short_window: 30m
+            burn_rate: "6"
+          annotations:
+            summary: "slo-demo is burning its latency error budget 6x too fast"
+            description: >-
+              {{ $value | humanizePercentage }} of /api requests slower than 300ms over 6h.

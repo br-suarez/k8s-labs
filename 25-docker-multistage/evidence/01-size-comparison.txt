@@ -1,0 +1,112 @@
+======================================================================
+ PART 1 — naive vs multi-stage
+ date: 2026-08-02T05:47:11Z
+======================================================================
+
+========== Building both images ==========
+
+$ docker build -q -t checkout-api:naive -f app/Dockerfile.naive app
+sha256:d26026643ca86111a473620bec66fbdfe77816369ca6d2f109317bfb432a0da3
+
+$ docker build -q -t checkout-api:multistage -f app/Dockerfile.multistage app
+sha256:654a079d0efe2a897b1d31dec2911edfab0c68e35cd7bc5b5292d27bb5bc7fa4
+
+========== Size ==========
+
+$ docker images checkout-api --format table {{.Tag}}\t{{.Size}}
+TAG            SIZE
+broken-perms   233MB
+multistage     235MB
+broken-path    235MB
+naive          1.66GB
+
+Sizes reported by 'docker images' are uncompressed on-disk size. What actually
+crosses the network on a pull is the compressed layers, so compare both.
+
+$ docker image inspect checkout-api:naive --format {{.RepoTags}} layers={{len .RootFS.Layers}}
+[checkout-api:naive] layers=12
+
+$ docker image inspect checkout-api:multistage --format {{.RepoTags}} layers={{len .RootFS.Layers}}
+[checkout-api:multistage] layers=7
+
+========== Where the bytes are — largest layers, naive ==========
+
+$ sh -c docker history checkout-api:naive --no-trunc --format '{{.Size}}\t{{.CreatedBy}}' | sort -hr | head -5 | cut -c1-160
+619MB	RUN /bin/sh -c set -ex;  apt-get update;  apt-get install -y --no-install-recommends   autoconf   automake   bzip2   default-libmysqlclient-dev   dpkg-dev
+213MB	RUN /bin/sh -c ARCH= && dpkgArch="$(dpkg --print-architecture)"   && case "${dpkgArch##*-}" in     amd64) ARCH='x64';;     ppc64el) ARCH='ppc64le';;     s
+194MB	RUN /bin/sh -c set -eux;  apt-get update;  apt-get install -y --no-install-recommends   git   mercurial   openssh-client   subversion     procps  ;  rm -r
+133MB	# debian.sh --arch 'amd64' out/ 'bookworm' '@1783900800'
+52.2MB	RUN /bin/sh -c set -eux;  apt-get update;  apt-get install -y --no-install-recommends   ca-certificates   curl   gnupg   netbase   sq   wget  ;  rm -rf /
+
+========== Where the bytes are — largest layers, multi-stage ==========
+
+$ sh -c docker history checkout-api:multistage --no-trunc --format '{{.Size}}\t{{.CreatedBy}}' | sort -hr | head -5 | cut -c1-160
+160MB	RUN /bin/sh -c addgroup -g 1000 node     && adduser -u 1000 -G node -s /bin/sh -D node     && apk add --no-cache         libstdc++     && apk add --no-cac
+9.07MB	ADD alpine-minirootfs-3.24.1-x86_64.tar.gz / # buildkit
+5.48MB	RUN /bin/sh -c apk add --no-cache --virtual .build-deps-yarn curl gnupg tar   && export GNUPGHOME="$(mktemp -d)"   && for key in     6A010C5166006599AA17
+1.17MB	RUN /bin/sh -c mkdir -p /app/dist/data && chown -R node:node /app # buildkit
+1.17MB	COPY /app/dist ./dist # buildkit
+
+========== What is actually inside each image ==========
+
+Naive ships gcc, python3, 69 node_modules entries including the esbuild
+devDependency, and runs as root.
+
+Note what does NOT change: npm is present in BOTH. It ships with every
+node:* base image including -alpine, so multi-stage does not remove it.
+Getting rid of the package manager entirely needs a distroless or scratch
+base image, which is a separate decision from multi-stage.
+
+$ sh -c docker run --rm --entrypoint sh checkout-api:naive -c 'which npm node python3 gcc 2>/dev/null; echo "node_modules entries: $(ls /app/node_modules 2>/dev/null | wc -l)"; echo "esbuild present: $(test -d /app/node_modules/esbuild && echo yes || echo no)"; echo "runs as uid: $(id -u)"'
+/usr/local/bin/npm
+/usr/local/bin/node
+/usr/bin/python3
+/usr/bin/gcc
+node_modules entries: 69
+esbuild present: yes
+runs as uid: 0
+
+$ sh -c docker run --rm --entrypoint sh checkout-api:multistage -c 'which npm node python3 gcc 2>/dev/null; echo "node_modules entries: $(ls /app/node_modules 2>/dev/null | wc -l)"; echo "esbuild present: $(test -d /app/node_modules/esbuild && echo yes || echo no)"; echo "runs as uid: $(id -u)"'
+/usr/local/bin/npm
+/usr/local/bin/node
+node_modules entries: 0
+esbuild present: no
+runs as uid: 1000
+
+========== Layer cache behaviour on a source-only change ==========
+
+Changing one line of src/server.js and rebuilding both.
+
+The first attempt at this used 'touch', which proved nothing: Docker's COPY
+cache keys on file CONTENT, not mtime, so both builds were fully CACHED. The
+file has to actually change.
+
+--- naive rebuild (COPY . . before npm install) ---
+#6 CACHED
+#7 [3/5] COPY . .
+#8 [4/5] RUN npm install
+#9 [5/5] RUN npm run build
+elapsed: 6s
+
+--- multi-stage rebuild (COPY package*.json first) ---
+#8 [build 3/6] COPY package*.json ./
+#8 CACHED
+#9 CACHED
+#10 [build 4/6] RUN npm ci
+#10 CACHED
+#11 [build 5/6] COPY src ./src
+#12 [build 6/6] RUN npm run build
+#13 CACHED
+#14 [runtime 3/4] COPY --from=build /app/dist ./dist
+#14 CACHED
+elapsed: 2s
+
+(src/server.js restored)
+
+========== Both images still work ==========
+
+$ sh -c docker run --rm -d --name verify-naive -p 3101:3000 checkout-api:naive >/dev/null && sleep 3 && curl -s localhost:3101/ && echo && docker rm -f verify-naive >/dev/null
+{"service":"checkout-api","uid":0,"node":"v22.23.2"}
+
+$ sh -c docker run --rm -d --name verify-ms -p 3102:3000 checkout-api:multistage >/dev/null && sleep 3 && curl -s localhost:3102/ && echo && docker rm -f verify-ms >/dev/null
+{"service":"checkout-api","uid":1000,"node":"v22.23.2"}

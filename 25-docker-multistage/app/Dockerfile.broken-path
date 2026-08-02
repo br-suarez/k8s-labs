@@ -1,0 +1,24 @@
+# BROKEN 1 — builds successfully, dies on start.
+#
+# The bundle is written to dist/server.js. CMD asks for dist/index.js.
+#
+# This is the failure mode worth practising because `docker build` is completely
+# happy: nothing verifies that the path in CMD exists. The error only appears at
+# `docker run`, and by then the container has already exited — so `docker exec`
+# is not available to go and look.
+FROM node:22 AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY src ./src
+RUN npm run build
+
+FROM node:22-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app/dist ./dist
+RUN mkdir -p /app/dist/data && chown -R node:node /app
+USER node
+EXPOSE 3000
+# server.js, not index.js.
+CMD ["node", "dist/index.js"]

@@ -1,0 +1,31 @@
+======================================================================
+ TOIL MEASUREMENT — automated triage vs manual runbook
+ date:    2026-08-02T05:17:09Z
+ runs:    3 each
+ service: slo-demo (ns slo-demo)
+======================================================================
+
+Commands a human types in the manual path: 11
+Commands a human types in the automated path: 0 (fires on the alert)
+
+---- MANUAL RUNBOOK ----
+  run 1: 1.34s
+  run 2: 1.34s
+  run 3: 1.34s
+  average: 1.34s
+
+---- AUTOMATED TRIAGE ----
+  run 1: 0.71s
+  run 2: 0.67s
+  run 3: 0.66s
+  average: 0.68s
+
+---- RESULT ----
+  manual average:    1.34s over 11 separate commands
+  automated average: 0.68s, single invocation, zero human commands
+  mechanical speedup: 1.97x
+
+  NOTE: the mechanical time is the SMALL part of the saving. The manual
+  path also requires a human to be awake, find the runbook, paste each
+  command, and read raw JSON. The automated path has already written the
+  report by the time the page is acknowledged.
