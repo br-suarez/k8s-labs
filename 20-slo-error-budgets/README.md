@@ -306,22 +306,49 @@ Alert `SLODemoAvailabilityFastBurn` firing:
 
 ## Reproduce
 
-```bash
-kind create cluster --config cluster/kind-config.yaml
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm upgrade --install kube-prom-stack prometheus-community/kube-prometheus-stack \
-  -n monitoring --create-namespace --values monitoring/kube-prom-stack-values.yaml --wait
+Run from this directory. Total ~20 minutes, most of it image pulls and the
+experiment itself.
 
+```bash
+# 1. cluster (~2 min)
+kind create cluster --config cluster/kind-config.yaml
+
+# 2. monitoring stack (~5 min on a cold image cache)
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+helm upgrade --install kube-prom-stack prometheus-community/kube-prometheus-stack \
+  -n monitoring --create-namespace \
+  --values monitoring/kube-prom-stack-values.yaml --wait --timeout 10m
+
+# 3. the demo service (~2 min)
 docker build -t slo-demo:v1 ./app
 kind load docker-image slo-demo:v1 --name slo-lab
-
 kubectl create namespace slo-demo
 kubectl apply -f app/ -f monitoring/servicemonitor.yaml -f loadgen/loadgen.yaml
 kubectl apply -f slo/
 
-./monitoring/import-dashboard.sh     # Grafana dashboard
-./evidence/run-experiment.sh         # full incident + evidence capture
-./evidence/render-timeline.sh        # ASCII chart from Prometheus
+# 4. let Prometheus discover the target and build up a rate window.
+#    Skip this and the first measurements are taken over near-empty windows.
+kubectl rollout status deploy/slo-demo -n slo-demo --timeout=5m
+kubectl rollout status deploy/loadgen  -n slo-demo --timeout=5m
+sleep 120
+
+# 5. check the baseline is healthy before breaking anything
+./loadgen/chaos.sh status
 ```
+
+Expected at step 5 — around 590 req/s, error ratio near 0.1%, burn rate well
+under 1x, and no alerts firing. If the request rate is near zero the load
+generator has not started and the experiment will measure nothing.
+
+```bash
+./monitoring/import-dashboard.sh     # Grafana dashboard (optional)
+./evidence/run-experiment.sh         # ~12 min: injects 35% errors, waits for the
+                                     # page, heals, watches it clear
+./evidence/render-timeline.sh        # ASCII chart of the incident from Prometheus
+```
+
+`run-experiment.sh` overwrites `evidence/01..06`. To keep the committed run,
+copy the directory first.
 
 Teardown: `kind delete cluster --name slo-lab`
