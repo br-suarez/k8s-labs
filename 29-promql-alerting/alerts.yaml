@@ -1,0 +1,70 @@
+# A latency alert, deliberately built as a symptom alert rather than a
+# threshold on a resource.
+#
+# This is a different shape from the burn-rate alerts in module 20. Those ask
+# "how fast are we spending the error budget"; this one asks "are requests slow
+# right now". Both are legitimate — burn-rate for the SLO, a direct latency
+# alert for the operational signal an on-call engineer reads first.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: slo-demo-promql-refresher
+  namespace: monitoring
+  labels:
+    app: slo-demo
+    role: refresher-alerts
+spec:
+  groups:
+    - name: slo-demo.latency
+      rules:
+        # Recorded so the alert and any dashboard read the identical
+        # expression. A dashboard that disagrees with the alert turns an
+        # incident into an argument about which number is right.
+        - record: job:http_request_duration_seconds:p99
+          expr: |
+            histogram_quantile(
+              0.99,
+              sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))
+            )
+          labels:
+            service: slo-demo
+
+        - alert: SLODemoHighLatencyP99
+          # 0.3 is not a round number picked for looking sensible — it is the
+          # latency SLO threshold from module 20's SLO spec.
+          expr: job:http_request_duration_seconds:p99{service="slo-demo"} > 0.3
+          # 2m so a single slow scrape does not page. The p99 is already
+          # computed over a 5m window, so this is 2m of sustained breach on top
+          # of an already-smoothed signal.
+          for: 2m
+          labels:
+            severity: warning
+            service: slo-demo
+            signal: latency
+          annotations:
+            summary: "slo-demo p99 latency above 300ms"
+            description: >-
+              p99 is {{ $value | humanizeDuration }} over the last 5 minutes, above the
+              300ms objective. Check saturation before assuming a code regression —
+              CPU throttling produces exactly this shape.
+
+        # Saturation, alerting on throttling rather than utilisation.
+        # A container sitting at 100% of its CPU limit may be perfectly healthy;
+        # one being throttled is being actively starved.
+        - alert: SLODemoCPUThrottling
+          expr: |
+            sum by (pod) (rate(container_cpu_cfs_throttled_periods_total{namespace="slo-demo"}[5m]))
+            /
+            sum by (pod) (rate(container_cpu_cfs_periods_total{namespace="slo-demo"}[5m]))
+            > 0.25
+          for: 5m
+          labels:
+            severity: warning
+            service: slo-demo
+            signal: saturation
+          annotations:
+            summary: "{{ $labels.pod }} is CPU throttled {{ $value | humanizePercentage }} of its scheduling periods"
+            description: >-
+              The container is hitting its CPU limit often enough to be waiting for
+              quota. This shows up as latency long before any CPU utilisation graph
+              looks wrong.

@@ -1,0 +1,268 @@
+======================================================================
+ PROMQL — the four queries, two classic mistakes, one forced alert
+ date: 2026-08-02T06:18:00Z
+======================================================================
+
+========== 1. RATE — throughput by status ==========
+
+--- requests/sec by status
+promql: sum by (status) (rate(http_requests_total{job="slo-demo",path="/api"}[1m])) 
+  status=200  =>  591.725
+  status=500  =>  0.474
+
+========== 2. ERRORS — failure ratio ==========
+
+--- error ratio (5m)
+promql: sum(rate(http_requests_total{job="slo-demo",path="/api",status=~"5.."}[5m])) / sum(rate(http_requests_total{job="slo-demo",path="/api"}[5m])) 
+  (no labels)  =>  0.108%
+
+========== 3. DURATION — p50 / p90 / p99 ==========
+
+--- p50
+promql: histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  85.3ms
+
+--- p90
+promql: histogram_quantile(0.90, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  175.09ms
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  198.61ms
+
+========== 4. SATURATION — memory vs limit, and CPU throttling ==========
+
+--- memory working set / limit
+promql: max by (pod) (container_memory_working_set_bytes{namespace="slo-demo",container="slo-demo"} / on (pod,container) kube_pod_container_resource_limits{namespace="slo-demo",container="slo-demo",resource="memory"}) 
+  pod=slo-demo-6c776466f4-9zxzf  =>  25.092%
+  pod=slo-demo-6c776466f4-ll5hq  =>  21.454%
+  pod=slo-demo-6c776466f4-666m6  =>  24.39%
+
+--- CPU throttled periods ratio
+promql: sum by (pod) (rate(container_cpu_cfs_throttled_periods_total{namespace="slo-demo"}[5m])) / sum by (pod) (rate(container_cpu_cfs_periods_total{namespace="slo-demo"}[5m])) 
+  (empty result)
+
+========== MISTAKE 1 — histogram_quantile without 'by (le)' ==========
+
+The correct form aggregates buckets while KEEPING the le label:
+
+--- correct: sum by (le)
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  198.61ms
+
+Dropping 'by (le)' removes the only label the function can interpolate over:
+
+--- wrong: bare sum
+promql: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (empty result)
+
+========== MISTAKE 2 — rate(sum(...)) instead of sum(rate(...)) ==========
+
+Correct — rate each pod's counter, then add the per-second results:
+
+--- correct: sum(rate(...))
+promql: sum(rate(http_requests_total{job="slo-demo",path="/api"}[5m])) 
+  (no labels)  =>  584.015
+
+Wrong — adding raw counters first. It happens to look plausible while every pod
+is up; the moment one restarts, the summed counter drops and rate() reads the
+reset as a real decrease. Same shape, silently wrong exactly during an incident:
+
+--- wrong: rate(sum(...))
+promql: rate(sum(http_requests_total{job="slo-demo",path="/api"})[5m:15s]) 
+  (no labels)  =>  589.232
+
+========== Loading the alert rules ==========
+prometheusrule.monitoring.coreos.com/slo-demo-promql-refresher created
+Alert state at baseline:
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+
+========== FORCING THE ALERT — inject latency ==========
+
+Setting slow_rate=0.60: 60% of requests take 320-700ms, which drags p99 well
+above the 300ms objective.
+{"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.6}
+
+
+[poll 1 @ 06:18:48Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  198.59ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+
+[poll 2 @ 06:19:19Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  555.24ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+
+[poll 3 @ 06:19:51Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  778.15ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [PENDING] SLODemoHighLatencyP99  value=7.107674050632917e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[poll 4 @ 06:20:22Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  860.01ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [PENDING] SLODemoHighLatencyP99  value=8.336243968904968e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[poll 5 @ 06:20:54Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  905.12ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [PENDING] SLODemoHighLatencyP99  value=8.856851256464306e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[poll 6 @ 06:21:25Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  932.12ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [PENDING] SLODemoHighLatencyP99  value=9.127473442461314e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[poll 7 @ 06:21:57Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  950.3ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [FIRING] SLODemoHighLatencyP99  value=9.37382481514164e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+>>> SLODemoHighLatencyP99 is FIRING at 06:21:57Z
+
+========== RECOVERY — restore baseline and watch it clear ==========
+
+[recovery poll 1 @ 06:21:57Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  950.3ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [FIRING] SLODemoHighLatencyP99  value=9.37382481514164e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[recovery poll 2 @ 06:22:29Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  951.43ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [FIRING] SLODemoHighLatencyP99  value=9.525447941728529e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[recovery poll 3 @ 06:23:00Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  955ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [FIRING] SLODemoHighLatencyP99  value=9.545820463256847e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[recovery poll 4 @ 06:23:32Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  955.15ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [FIRING] SLODemoHighLatencyP99  value=9.549973224238473e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[recovery poll 5 @ 06:24:03Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  939.4ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [FIRING] SLODemoHighLatencyP99  value=9.551454545454547e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[recovery poll 6 @ 06:24:35Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  915.31ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [FIRING] SLODemoHighLatencyP99  value=9.393969866142893e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[recovery poll 7 @ 06:25:06Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  877.7ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [FIRING] SLODemoHighLatencyP99  value=8.984664926022635e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[recovery poll 8 @ 06:25:38Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  808.37ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [FIRING] SLODemoHighLatencyP99  value=8.489846563620624e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[recovery poll 9 @ 06:26:09Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  642.08ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [FIRING] SLODemoHighLatencyP99  value=7.455765505256435e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[recovery poll 10 @ 06:26:40Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  374.27ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [FIRING] SLODemoHighLatencyP99  value=5.746295885943594e-01
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+[recovery poll 11 @ 06:27:11Z]
+
+--- p99
+promql: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job="slo-demo",path="/api"}[5m]))) 
+  (no labels)  =>  198.74ms
+  [INACTIVE] SLODemoLatencyFastBurn  value=n/a
+  [INACTIVE] SLODemoLatencySlowBurn  value=n/a
+  [INACTIVE] SLODemoHighLatencyP99  value=n/a
+  [INACTIVE] SLODemoCPUThrottling  value=n/a
+
+>>> back to inactive at 06:27:11Z
