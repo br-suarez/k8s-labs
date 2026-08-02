@@ -1,0 +1,72 @@
+# FAULT 2 — Service that routes nowhere, and a Service that routes wrong
+#
+# Two distinct failures that look identical from a client ("connection refused"
+# / "no route to host") but have completely different diagnoses:
+#
+#   2a  selector mismatch  -> Service has NO endpoints at all
+#   2b  targetPort wrong   -> Service HAS endpoints, and still fails
+#
+# 2b is the nastier one. Every "is the Service healthy" check passes: the
+# selector matches, endpoints are populated, pods are Ready. The traffic is
+# simply being sent to a port nothing is listening on.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-backend
+  namespace: k8s-refresher
+  labels:
+    app: web-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-backend
+  template:
+    metadata:
+      labels:
+        # The pods are labelled app=web-backend ...
+        app: web-backend
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - name: http
+              containerPort: 80
+          resources:
+            requests:
+              cpu: 20m
+              memory: 24Mi
+            limits:
+              memory: 48Mi
+---
+# 2a — selector does not match any pod.
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-nosel
+  namespace: k8s-refresher
+spec:
+  selector:
+    # ... but the Service looks for app=web-frontend. Nothing matches, so the
+    # Endpoints object stays empty and every connection is refused.
+    app: web-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+---
+# 2b — selector is correct, destination port is not.
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-badport
+  namespace: k8s-refresher
+spec:
+  selector:
+    app: web-backend
+  ports:
+    - port: 80
+      # nginx listens on 80. Traffic is forwarded to 8080, where nothing is
+      # bound. Endpoints will be populated and the Service will look healthy.
+      targetPort: 8080

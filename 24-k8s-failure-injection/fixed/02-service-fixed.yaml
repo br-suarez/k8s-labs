@@ -1,0 +1,29 @@
+# FIX 2 — selector matches the pod labels, targetPort matches the container port.
+#
+# targetPort references the container port by NAME rather than by number. The
+# name is defined once in the pod spec, so the Service cannot drift out of sync
+# with it — which is exactly the mistake 2b was.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-nosel
+  namespace: k8s-refresher
+spec:
+  selector:
+    app: web-backend
+  ports:
+    - port: 80
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-badport
+  namespace: k8s-refresher
+spec:
+  selector:
+    app: web-backend
+  ports:
+    - port: 80
+      targetPort: http

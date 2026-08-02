@@ -1,0 +1,62 @@
+# FAULT 3 — Pod Pending because its PVC never binds
+#
+# The PVC asks for a StorageClass that does not exist in this cluster. Nothing
+# provisions it, so the PVC stays Pending, and the Pod stays Pending because it
+# cannot mount a volume that has no PersistentVolume behind it.
+#
+# The trap: `kubectl get pods` says Pending and `kubectl describe pod` says
+# "0/3 nodes are available: pod has unbound immediate PersistentVolumeClaims".
+# That reads like a SCHEDULING problem and sends people to look at node capacity,
+# taints and affinity. The scheduler is fine. The storage layer is the problem,
+# and the real explanation is one object further down.
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-fast
+  namespace: k8s-refresher
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  # kind ships exactly one StorageClass: "standard" (local-path provisioner).
+  # "fast-ssd" is the kind of name that gets copied in from another cluster's
+  # manifests and is never noticed until nothing binds.
+  storageClassName: fast-ssd
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-pending
+  namespace: k8s-refresher
+  labels:
+    app: db-pending
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-pending
+  template:
+    metadata:
+      labels:
+        app: db-pending
+    spec:
+      containers:
+        - name: app
+          image: busybox:1.37
+          command: ["sh", "-c", "echo started; sleep 3600"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 32Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-fast

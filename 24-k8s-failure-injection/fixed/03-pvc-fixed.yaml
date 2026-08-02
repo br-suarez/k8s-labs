@@ -1,0 +1,19 @@
+# FIX 3 — request a StorageClass that exists.
+#
+# `spec.storageClassName` is IMMUTABLE on a bound PVC and effectively immutable
+# on a pending one: kubectl apply is rejected. The PVC has to be deleted and
+# recreated, which is why run-lab.sh deletes it rather than applying over it.
+# On a bound PVC holding real data this would be a migration, not an edit.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-fast
+  namespace: k8s-refresher
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  # "standard" is what kind's local-path provisioner registers.
+  storageClassName: standard
