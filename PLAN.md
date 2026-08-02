@@ -22,6 +22,16 @@ nada: haces el módulo completo y te desplazas hacia la ruta B.** El calendario 
 abajo es el de la ruta A; las 4 semanas de reserva son exactamente el colchón que
 compran los diagnósticos.
 
+### Reajuste de pesos (2026-08-02)
+
+Tres cambios que suman **cero bloques netos**, así que la fecha no se mueve:
+
+| Cambio | Bloques | Motivo |
+|---|---|---|
+| Gateway API 6 → 5 | −1 | Ingress domina la base instalada; es inversión a 2–3 años, no a corto plazo. Los labs 06–08 pasan a opcionales |
+| Jenkins & Ansible 4 → 3 | −1 | Leer un Jenkinsfile sabiendo Actions es traducción, no aprendizaje. Dentro del módulo, 1 bloque a Jenkins y 2 a Ansible, que no es legacy |
+| **Game Day I** tras el módulo 08 | +2 | El módulo de mayor valor estaba solo al final, donde el protocolo de atraso lo sacrifica |
+
 No optimices para llegar el 1 de febrero. Optimiza para que los criterios de
 salida se cumplan de verdad. La fecha es maleable; el criterio no.
 
@@ -38,31 +48,44 @@ Leyenda de bloques: `05×3` = tres bloques del módulo 05 esa semana.
 | 3 | 2026-08-17 | `02×2` `03×1` | **Pulse tras NGINX con TLS** |
 | 4 | 2026-08-24 | `03×1` `04×2` | **Pulse en Compose, imágenes distroless** |
 | 5 | 2026-08-31 | `05×3` | Pulse en kind |
-| 6 | 2026-09-07 | `05×3` | **NGINX sustituido por Gateway API** |
+| 6 | 2026-09-07 | `05×2` `06×1` | **NGINX sustituido por Gateway API** |
 | 7 | 2026-09-14 | — | 🟡 **RESERVA** + repaso 30 d (mód. 00–02) |
 | 8 | 2026-09-21 | `06×3` | |
-| 9 | 2026-09-28 | `06×2` `07×1` | **Postgres con estado, drill de backup** |
-| 10 | 2026-10-05 | `07×3` | **SLO definido, recording rule 8s → <1s** |
+| 9 | 2026-09-28 | `06×1` `07×2` | **Postgres con estado, drill de backup** |
+| 10 | 2026-10-05 | `07×2` `08×1` | **SLO definido, recording rule 8s → <1s** |
 | 11 | 2026-10-12 | `08×3` | |
-| 12 | 2026-10-19 | `08×3` | **Trazas propias, exemplars métrica→traza** |
+| 12 | 2026-10-19 | `08×2` `09×1` | **Trazas propias, exemplars métrica→traza** |
 | 13 | 2026-10-26 | — | 🟡 **RESERVA** + repaso 30 d (mód. 05–06) |
-| 14 | 2026-11-02 | `09×3` | |
-| 15 | 2026-11-09 | `09×1` `10×2` | **Pipeline verde con SBOM** |
+| 14 | 2026-11-02 | `08b×2` `09×1` | 🔥 **Game Day I + postmortem** |
+| 15 | 2026-11-09 | `09×2` `10×1` | **Pipeline verde con SBOM** |
 | 16 | 2026-11-16 | `10×3` | **GitOps: Argo CD gobierna el cluster** |
-| 17 | 2026-11-23 | `11×2` `12×1` | **Canary con rollback automático por SLO** |
+| 17 | 2026-11-23 | `10×1` `11×2` | **Canary con rollback automático por SLO** |
 | 18 | 2026-11-30 | `12×3` | |
-| 19 | 2026-12-07 | `12×1` `13×2` | **Solo imágenes firmadas admitidas** |
-| 20 | 2026-12-14 | `13×1` `14×2` | Infra como módulos Terraform |
+| 19 | 2026-12-07 | `12×2` `13×1` | **Solo imágenes firmadas admitidas** |
+| 20 | 2026-12-14 | `13×2` `14×1` | Infra como módulos Terraform |
 | 21 | 2026-12-21 | — | 🎄 **RESERVA** — Navidad |
 | 22 | 2026-12-28 | — | 🎄 **RESERVA** — Navidad |
 | 23 | 2027-01-04 | `14×3` | |
-| 24 | 2027-01-11 | `14×1` `15×2` | **Pulse en GKE, y destruido** |
+| 24 | 2027-01-11 | `14×2` `15×1` | **Pulse en GKE, y destruido** |
 | 25 | 2027-01-18 | `15×2` `16×1` | Comparativa Jenkins vs Actions |
-| 26 | 2027-01-25 | `16×3` | 🏁 **Game Day + postmortem** |
+| 26 | 2027-01-25 | `16×3` | 🏁 **Game Day II + postmortem** |
 
 Las semanas 21 y 22 son reserva por calendario, no por diseño. Si llegas
 adelantado, adelanta el módulo 14 — es el único con costo y conviene ejecutarlo
 concentrado.
+
+**Sobre la semana 12:** el primer bloque del módulo 09 se coloca antes del Game
+Day a propósito. El 09 depende del 03, no del 08, así que no hay razón para
+esperar, y deja el Game Day entero dentro de una sola semana en vez de partido
+por la semana de reserva. Un postmortem escrito dos semanas después del incidente
+no sirve.
+
+**Sobre el Game Day I (semana 14):** es el cambio de diseño más importante del
+plan. El módulo de mayor valor —depurar algo que no habías visto, bajo presión—
+estaba solo al final, en la posición exacta que el protocolo de atraso
+sacrifica. Ahora hay uno a mitad de camino, contra un sistema de seis capas en
+vez de doce, y los dos postmortems separados por catorce semanas son la medida
+más honesta de progreso de todo el repo.
 
 ---
 

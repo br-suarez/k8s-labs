@@ -47,6 +47,7 @@ through canary deployments gated on its own SLO.
 | 06 | Postgres as StatefulSet, shared NFS storage, PDBs, backup drill |
 | 07 | kube-prometheus-stack, ServiceMonitors, RED dashboards, an SLO |
 | 08 | OpenTelemetry SDK + Collector, traces, metric→trace exemplars |
+| 08b | *No new layer — the platform is broken deliberately and diagnosed* |
 | 09 | GitHub Actions: build, test, scan, SBOM, publish by digest |
 | 10 | Argo CD app-of-apps, Kustomize overlays, self-heal |
 | 11 | Argo Rollouts canary gated on the module 07 SLO |
@@ -67,18 +68,19 @@ through canary deployments gated on its own SLO.
 | 02 | [NGINX as Edge](./modules/02-nginx-edge/README.md) | 4 | ⬜ |
 | 03 | [Docker & Image Supply Chain](./modules/03-docker-supply-chain/README.md) | 4 | ⬜ |
 | 04 | [Kubernetes Core](./modules/04-kubernetes-core/README.md) | 4 | ⬜ |
-| 05 | [Gateway API](./modules/05-gateway-api/README.md) | 6 | ⬜ |
+| 05 | [Gateway API](./modules/05-gateway-api/README.md) | 5 | ⬜ |
 | 06 | [Kubernetes Advanced: State, Storage, HA](./modules/06-kubernetes-advanced/README.md) | 5 | ⬜ |
 | 07 | [Prometheus & Grafana](./modules/07-prometheus-grafana/README.md) | 4 | ⬜ |
 | 08 | [OpenTelemetry](./modules/08-opentelemetry/README.md) | 6 | ⬜ |
+| 08b | [**Game Day I**](./modules/08b-game-day-i/README.md) | 2 | ⬜ |
 | 09 | [CI with GitHub Actions](./modules/09-github-actions/README.md) | 4 | ⬜ |
 | 10 | [GitOps with Argo CD](./modules/10-gitops-argocd/README.md) | 5 | ⬜ |
 | 11 | [Progressive Delivery](./modules/11-progressive-delivery/README.md) | 4 | ⬜ |
 | 12 | [DevSecOps & Supply Chain](./modules/12-devsecops/README.md) | 5 | ⬜ |
 | 13 | [Terraform](./modules/13-terraform/README.md) | 5 | ⬜ |
 | 14 | [Google Cloud](./modules/14-gcp/README.md) | 6 | ⬜ |
-| 15 | [Jenkins & Ansible: Operate and Migrate](./modules/15-jenkins-ansible/README.md) | 4 | ⬜ |
-| 16 | [Game Day & Hardening](./modules/16-game-day/README.md) | 4 | ⬜ |
+| 15 | [Jenkins & Ansible: Operate and Migrate](./modules/15-jenkins-ansible/README.md) | 3 | ⬜ |
+| 16 | [Game Day II & Hardening](./modules/16-game-day/README.md) | 4 | ⬜ |
 
 **76 blocks of 120 minutes ≈ 152 hours.** See [PLAN.md](./PLAN.md) for the
 week-by-week calendar and [TRACKER.md](./TRACKER.md) for progress.

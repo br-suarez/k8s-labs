@@ -1,9 +1,14 @@
-# Module 16 — Game Day & Hardening
+# Module 16 — Game Day II & Hardening
 
-**4 blocks.** Requires everything.
+**4 blocks.** Requires everything, including [Game Day I](../08b-game-day-i/README.md).
 
 No new technology. This module is the exam, and it is the module that produces
 the artifact you actually show people.
+
+This is the **second** Game Day. You ran one in week 14 against a six-layer
+system; this one covers all twelve. Put the two postmortems side by side when you
+finish — the change in time-to-diagnosis across fourteen weeks is the most honest
+measure of progress in this repository.
 
 ## Objectives
 

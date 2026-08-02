@@ -1,11 +1,16 @@
 # Module 05 — Gateway API
 
-**6 blocks.** Requires modules 02 and 04. One of the heaviest modules in the
-track.
+**5 blocks CORE**, plus 3 optional labs. Requires modules 02 and 04.
 
-**None of the reference lab repositories cover this at all.** Every one of them
-uses Ingress. This module is built from scratch against the upstream
-specification, and it is weighted accordingly.
+Weighted heavily because it is written from the upstream specification rather
+than adapted from existing material — but deliberately trimmed from 6 to 5,
+because Ingress still dominates the installed base and this is an investment in
+where routing is going rather than where it is. Labs 06, 07 and 08 are genuinely
+optional; the CORE path is 00–05.
+
+The two things that keep it at 5 rather than lower: lab 05 is load-bearing for
+module 11's canary, and the migration document in lab 04 is the strongest
+interview artifact this track produces.
 
 ## Objectives
 
@@ -50,6 +55,10 @@ the actual problem Gateway API solves.
 | 06 | [Standard vs experimental channel](./labs/06-channels.md) and the upgrade hazard | EXTEND | 40 min |
 | 07 | [`ReferenceGrant` and cross-namespace routing](./labs/07-cross-namespace.md) | EXTEND | 40 min |
 | 08 | [Request mirroring to a shadow backend](./labs/08-mirroring.md) | DEEP | 30 min |
+
+> Labs 00–05 are the 5 CORE blocks. Labs 06–08 are optional and the first thing
+> to drop if you are behind — pick them up in a reserve week. Note that lab 07
+> constructs this module's break-fix forwards, so do the break-fix first.
 
 > **Channel note (verified 2026-08-02).** As of v1.6, `GatewayClass`, `Gateway`,
 > `HTTPRoute`, `GRPCRoute`, `TCPRoute`, `TLSRoute`, `UDPRoute`, `ReferenceGrant`

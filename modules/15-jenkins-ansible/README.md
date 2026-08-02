@@ -1,10 +1,15 @@
 # Module 15 — Jenkins & Ansible: Operate and Migrate
 
-**4 blocks.** Requires modules 09 and 13.
+**3 blocks — 1 Jenkins, 2 Ansible.** Requires modules 09 and 13.
 
-Neither tool has any coverage in the reference repos — Ansible appears as a
-three-line file. Both are built from scratch here, from beginner to
-mid-advanced, so someone starting cold can follow this module and be productive.
+The split is deliberate and uneven. Reading an inherited Jenkinsfile when you
+already know GitHub Actions is largely a translation exercise: stages, agents,
+credentials and artifacts map almost one to one. One block is enough to read
+one, operate it, and write the comparison.
+
+**Ansible is not legacy** and gets the other two. It remains the right answer for
+everything that is not a container — VMs, network appliances, bare metal, and the
+nodes your cluster runs on. Treating it as Jenkins's companion undersells it.
 
 ## Why this comes last, and why it is framed as migration
 
@@ -43,14 +48,23 @@ network appliances, bare metal, and the machines that run your Kubernetes nodes.
 
 | # | Lab | Level | Time |
 |---|---|---|---|
+### Jenkins — 1 block
+
+| # | Lab | Level | Time |
+|---|---|---|---|
 | 00 | Repaso (módulos 13–14) | CORE | 15 min |
-| 01 | Jenkins from zero: controller, agent, first pipeline | CORE | 45 min |
-| 02 | Declarative Jenkinsfile replicating the module 09 pipeline exactly | CORE | 50 min |
-| 03 | Jenkins credentials and the ways they leak into build logs | CORE | 40 min |
-| 04 | Ansible from zero: inventory, playbook, roles, idempotency | CORE | 50 min |
-| 05 | Provision a VM-based `pulse-worker` with Ansible; `--check` must be clean | CORE | 50 min |
-| 06 | **The migration document**: Jenkins vs Actions with real numbers, and the case for staying | CORE | 45 min |
-| 07 | Ansible against the Kubernetes nodes: patching without breaking the cluster | EXTEND | 40 min |
+| 01 | Inherit a Jenkins: stand up a controller and an agent, then read and operate a Jenkinsfile you did not write. Find the two places its credentials leak into build logs | CORE | 55 min |
+| 02 | **The migration document**: the module 09 pipeline and this one, side by side, with real numbers — and the case for *not* migrating | CORE | 50 min |
+
+### Ansible — 2 blocks
+
+| # | Lab | Level | Time |
+|---|---|---|---|
+| 03 | From zero: inventory, playbook, modules, and idempotency measured (`changed=0` on the second run, and every task that had to be rewritten to get there) | CORE | 50 min |
+| 04 | Roles, `ansible-vault`, and dynamic inventory against a real source | CORE | 50 min |
+| 05 | Provision a VM-based `pulse-worker`; `--check` must be clean and the service must report to the same `pulse-api` | CORE | 50 min |
+| 06 | Patch the Kubernetes nodes without breaking the cluster: cordon, drain, patch, uncordon — respecting the PDBs from module 06 | CORE | 50 min |
+| 07 | Ansible vs a Kubernetes operator for the same task: when does declarative config management stop being the right tool? | EXTEND | 40 min |
 
 ## Capstone layer
 

@@ -16,18 +16,19 @@ tres semanas después no sirve para nada.
 | 02 | NGINX as Edge | ⬜ | ⬜ | | | 4 / | |
 | 03 | Docker & Supply Chain | ⬜ | ⬜ | | | 4 / | |
 | 04 | Kubernetes Core | ⬜ | ⬜ | | | 4 / | |
-| 05 | Gateway API | ⬜ | ⬜ | | | 6 / | |
+| 05 | Gateway API | ⬜ | ⬜ | | | 5 / | |
 | 06 | Kubernetes Advanced | ⬜ | ⬜ | | | 5 / | |
 | 07 | Prometheus & Grafana | ⬜ | ⬜ | | | 4 / | |
 | 08 | OpenTelemetry | ⬜ | ⬜ | | | 6 / | |
+| 08b | **Game Day I** | ⬜ | — | | | 2 / | |
 | 09 | GitHub Actions | ⬜ | ⬜ | | | 4 / | |
 | 10 | GitOps con Argo CD | ⬜ | ⬜ | | | 5 / | |
 | 11 | Progressive Delivery | ⬜ | ⬜ | | | 4 / | |
 | 12 | DevSecOps | ⬜ | ⬜ | | | 5 / | |
 | 13 | Terraform | ⬜ | ⬜ | | | 5 / | |
 | 14 | Google Cloud | ⬜ | ⬜ | | | 6 / | |
-| 15 | Jenkins & Ansible | ⬜ | ⬜ | | | 4 / | |
-| 16 | Game Day & Hardening | ⬜ | ⬜ | | | 4 / | |
+| 15 | Jenkins & Ansible | ⬜ | ⬜ | | | 3 / | |
+| 16 | Game Day II & Hardening | ⬜ | ⬜ | | | 4 / | |
 
 **Columna Diagnóstico:** ✅ aprobado (ruta rápida) · ❌ no aprobado (módulo completo)
 
@@ -75,6 +76,7 @@ solo acumulando herramientas.
 | 06 | | | | |
 | 07 | | | | |
 | 08 | | | | |
+| **08b** | **mediana:** | | sin pistas | |
 | 09 | | | | |
 | 10 | | | | |
 | 11 | | | | |
@@ -117,6 +119,7 @@ módulo no está cerrado.
 | 06 | Estado + backup | ⬜ | `./platform/scripts/restore-drill.sh` |
 | 07 | Métricas + SLO | ⬜ | `./platform/scripts/verify.sh slo` |
 | 08 | Trazas + exemplars | ⬜ | `./platform/scripts/verify.sh traces` |
+| 08b | Postmortem I + remediación | ⬜ | `POSTMORTEM-1.md` y una comprobación nueva en el harness |
 | 09 | Pipeline CI | ⬜ | badge verde en GitHub |
 | 10 | GitOps | ⬜ | `argocd app get pulse` |
 | 11 | Canary | ⬜ | `kubectl argo rollouts status pulse-api` |
