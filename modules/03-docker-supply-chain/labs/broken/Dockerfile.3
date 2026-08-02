@@ -1,0 +1,8 @@
+# Builds clean. Runs, logs, then dies at a predictable point.
+FROM alpine:3.20
+RUN mkdir -p /app /data && adduser -D -u 10001 worker
+COPY app.sh /app/app.sh
+WORKDIR /app
+USER worker
+VOLUME /data
+CMD ["./app.sh"]

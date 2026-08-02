@@ -1,0 +1,7 @@
+# Builds clean. Runs. Refuses to stop promptly.
+# The app handles SIGTERM correctly - that is what makes this one interesting.
+FROM alpine:3.20
+RUN mkdir -p /app /data
+COPY app.sh /app/app.sh
+WORKDIR /app
+ENTRYPOINT ["/bin/sh", "-c", "echo 'entrypoint wrapper starting'; ./app.sh & wait $!"]
