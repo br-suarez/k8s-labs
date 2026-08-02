@@ -1,0 +1,137 @@
+======================================================================
+ CI/CD DEPLOY GATE
+ date: 2026-08-02T06:37:57Z
+======================================================================
+
+Baseline — both environments on slo-demo:v1
+
+$ kubectl get deploy checkout -n cicd-staging -o jsonpath={.spec.template.spec.containers[0].image}{"\n"}
+slo-demo:v1
+
+$ kubectl get deploy checkout -n cicd-production -o jsonpath={.spec.template.spec.containers[0].image}{"\n"}
+slo-demo:v1
+
+========== PIPELINE RUN — GOOD RELEASE (v3-fixed) ==========
+--- stage: deploy to staging
+deployment.apps/checkout image updated
+
+--- stage: gate
+==================================================================
+ DEPLOY GATE — checkout in cicd-staging
+ 2026-08-02T06:37:57Z
+==================================================================
+[GATE] 1/3 waiting for rollout to complete (timeout 90s)
+Waiting for deployment "checkout" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "checkout" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "checkout" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "checkout" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "checkout" rollout to finish: 1 old replicas are pending termination...
+deployment "checkout" successfully rolled out
+[1;32m[GATE] rollout completed[0m
+[GATE] 2/3 smoke test (up to 6 attempts)
+[GATE]      attempt 1/6 returned '000', retrying in 5s
+[1;32m[GATE] smoke test returned 200[0m
+[GATE] 3/3 soaking 90s, then verifying against the SLO
+[GATE]      (the soak must outlast the rate window, or the query grades the
+[GATE]       PREVIOUS release using traffic recorded before this deploy)
+       request rate : 145.29382470119523 req/s
+       error ratio  : 0.00028563267637817766 (budget 0.005)
+       p99 latency  : 0.19869328358208954 s (slo 300ms)
+[1;32m[GATE] SLO verification passed[0m
+
+[1;32m[GATE] PROMOTE APPROVED[0m
+
+--- stage: promote to production
+deployment.apps/checkout image updated
+Waiting for deployment "checkout" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "checkout" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "checkout" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "checkout" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "checkout" rollout to finish: 1 old replicas are pending termination...
+deployment "checkout" successfully rolled out
+PIPELINE RESULT: promoted v3-fixed to production
+
+production is running: slo-demo:v3-fixed
+
+######################################################################
+# The important case: a release that is BROKEN BUT READY.
+# slo-demo:v2-bad returns 500 to 20% of requests. Its pods pass every
+# readiness probe, so kubectl rollout status succeeds and the smoke
+# test returns 200. Only the SLO check can see the problem.
+######################################################################
+
+========== PIPELINE RUN — BROKEN RELEASE (v2-bad) ==========
+--- stage: deploy to staging
+deployment.apps/checkout image updated
+
+--- stage: gate
+==================================================================
+ DEPLOY GATE — checkout in cicd-staging
+ 2026-08-02T06:39:56Z
+==================================================================
+[GATE] 1/3 waiting for rollout to complete (timeout 90s)
+Waiting for deployment "checkout" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "checkout" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "checkout" rollout to finish: 2 old replicas are pending termination...
+Waiting for deployment "checkout" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "checkout" rollout to finish: 1 old replicas are pending termination...
+deployment "checkout" successfully rolled out
+[1;32m[GATE] rollout completed[0m
+[GATE] 2/3 smoke test (up to 6 attempts)
+[1;32m[GATE] smoke test returned 200[0m
+[GATE] 3/3 soaking 90s, then verifying against the SLO
+[GATE]      (the soak must outlast the rate window, or the query grades the
+[GATE]       PREVIOUS release using traffic recorded before this deploy)
+       request rate : 146.2705870196457 req/s
+       error ratio  : 0.1922258500605391 (budget 0.005)
+       p99 latency  : 0.19868599062662362 s (slo 300ms)
+
+[1;31m[GATE] BLOCKED: error ratio 0.1922258500605391 exceeds the 0.005 error budget[0m
+
+--- stage: promote to production  [SKIPPED — gate blocked]
+PIPELINE RESULT: v2-bad was NOT promoted
+
+production is running: slo-demo:v3-fixed
+
+--- proof the broken release really was running in staging
+
+$ kubectl get pods -n cicd-staging -l app=checkout -o custom-columns=NAME:.metadata.name,READY:.status.containerStatuses[0].ready,RESTARTS:.status.containerStatuses[0].restartCount,IMAGE:.spec.containers[0].image
+NAME                        READY   RESTARTS   IMAGE
+checkout-68459497d7-68sl2   true    0          slo-demo:v2-bad
+checkout-68459497d7-gwrvh   true    0          slo-demo:v2-bad
+
+========== PIPELINE RUN — UNSTARTABLE RELEASE (v9-nonexistent) ==========
+--- stage: deploy to staging
+deployment.apps/checkout image updated
+
+--- stage: gate
+==================================================================
+ DEPLOY GATE — checkout in cicd-staging
+ 2026-08-02T06:41:36Z
+==================================================================
+[GATE] 1/3 waiting for rollout to complete (timeout 90s)
+Waiting for deployment "checkout" rollout to finish: 1 out of 2 new replicas have been updated...
+NAME                        READY   REASON
+checkout-598c54dd54-vd58f   false   ErrImageNeverPull
+checkout-68459497d7-68sl2   true    <none>
+checkout-68459497d7-gwrvh   true    <none>
+
+[1;31m[GATE] BLOCKED: rollout did not complete — pods never became Ready[0m
+
+--- stage: promote to production  [SKIPPED — gate blocked]
+PIPELINE RESULT: v9-nonexistent was NOT promoted
+
+production is running: slo-demo:v3-fixed
+
+========== FINAL STATE ==========
+
+Production should still be on v3-fixed: the good release was promoted, and
+neither the broken nor the unstartable one ever reached it.
+
+$ kubectl get deploy checkout -n cicd-production -o jsonpath={.spec.template.spec.containers[0].image}{"\n"}
+slo-demo:v3-fixed
+
+$ kubectl get pods -n cicd-production -l app=checkout -o custom-columns=NAME:.metadata.name,READY:.status.containerStatuses[0].ready,IMAGE:.spec.containers[0].image
+NAME                        READY   IMAGE
+checkout-787767bff7-5dj9b   true    slo-demo:v3-fixed
+checkout-787767bff7-nqr2s   true    slo-demo:v3-fixed
