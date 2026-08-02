@@ -1,4 +1,4 @@
-# Notas — 08b-game-day-i
+# Notas — 08b-ebpf
 
 > Plantilla vacía. Estas notas son para ti, en español. El README del módulo
 > (formato portafolio) va en inglés.

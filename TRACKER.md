@@ -20,15 +20,16 @@ tres semanas después no sirve para nada.
 | 06 | Kubernetes Advanced | ⬜ | ⬜ | | | 5 / | |
 | 07 | Prometheus & Grafana | ⬜ | ⬜ | | | 4 / | |
 | 08 | OpenTelemetry | ⬜ | ⬜ | | | 6 / | |
-| 08b | **Game Day I** | ⬜ | — | | | 2 / | |
+| 08b | **eBPF & Profiling** | ⬜ | ⬜ | | | 4 / | |
+| 08c | **Game Day I** | ⬜ | — | | | 2 / | |
 | 09 | GitHub Actions | ⬜ | ⬜ | | | 4 / | |
 | 10 | GitOps con Argo CD | ⬜ | ⬜ | | | 5 / | |
 | 11 | Progressive Delivery | ⬜ | ⬜ | | | 4 / | |
 | 12 | DevSecOps | ⬜ | ⬜ | | | 5 / | |
 | 13 | Terraform | ⬜ | ⬜ | | | 5 / | |
-| 14 | Google Cloud | ⬜ | ⬜ | | | 6 / | |
+| 14 | Google Cloud | ⬜ | ⬜ | | | 7 / | |
 | 15 | Jenkins & Ansible | ⬜ | ⬜ | | | 3 / | |
-| 16 | Game Day II & Hardening | ⬜ | ⬜ | | | 4 / | |
+| 16 | Game Day II & Hardening | ⬜ | ⬜ | | | 5 / | |
 
 **Columna Diagnóstico:** ✅ aprobado (ruta rápida) · ❌ no aprobado (módulo completo)
 
@@ -76,7 +77,8 @@ solo acumulando herramientas.
 | 06 | | | | |
 | 07 | | | | |
 | 08 | | | | |
-| **08b** | **mediana:** | | sin pistas | |
+| 08b | | | | |
+| **08c** | **mediana:** | | sin pistas | |
 | 09 | | | | |
 | 10 | | | | |
 | 11 | | | | |
@@ -93,11 +95,11 @@ solo acumulando herramientas.
 | Fecha prevista | Semana | Tipo | Módulos | Hecho | Qué se me había olvidado |
 |---|---|---|---|---|---|
 | 2026-09-14 | 7 | 30 d | 00–02 | ⬜ | |
-| 2026-10-26 | 13 | 30 d | 05–06 | ⬜ | |
+| 2026-10-26 | 13 | 30 d | 05–07 | ⬜ | |
 | 2026-10-26 | 13 | 90 d | 00–02 | ⬜ | |
-| 2026-12-21 | 21 | 30 d | 09–12 | ⬜ | |
+| 2026-12-21 | 21 | 30 d | 08b–12 | ⬜ | |
 | 2026-12-21 | 21 | 90 d | 05–08 | ⬜ | |
-| 2027-01-25 | 26 | 90 d | 09–13 | ⬜ | |
+| 2027-02-08 | 28 | 90 d | 09–14 | ⬜ | |
 
 La última columna es la más valiosa del archivo. Lo que se te olvidó a los 30
 días es lo que se te va a olvidar en una entrevista.
@@ -119,7 +121,8 @@ módulo no está cerrado.
 | 06 | Estado + backup | ⬜ | `./platform/scripts/restore-drill.sh` |
 | 07 | Métricas + SLO | ⬜ | `./platform/scripts/verify.sh slo` |
 | 08 | Trazas + exemplars | ⬜ | `./platform/scripts/verify.sh traces` |
-| 08b | Postmortem I + remediación | ⬜ | `POSTMORTEM-1.md` y una comprobación nueva en el harness |
+| 08b | Profiling continuo, sin tocar el código | ⬜ | `./platform/scripts/verify.sh profiling` |
+| 08c | Postmortem I + remediación | ⬜ | `POSTMORTEM-1.md` y una comprobación nueva en el harness |
 | 09 | Pipeline CI | ⬜ | badge verde en GitHub |
 | 10 | GitOps | ⬜ | `argocd app get pulse` |
 | 11 | Canary | ⬜ | `kubectl argo rollouts status pulse-api` |

@@ -1,7 +1,7 @@
 # PLAN — Calendario semana por semana
 
 **Inicio:** lunes 2026-08-03
-**Objetivo:** 2027-02-01
+**Objetivo:** 2027-02-14
 **Ritmo:** 3 bloques de 120 min por semana (lunes, martes, miércoles) = 6 h/semana
 
 ---
@@ -13,8 +13,8 @@ cada módulo decide en cuál estás.
 
 | Ruta | Bloques | Semanas | Fin |
 |---|---|---|---|
-| **A — con diagnósticos aprobados** (la esperada para ti) | 66 | 22 contenido + 4 reserva = 26 | **2027-02-01** |
-| **B — módulo completo, sin saltar nada** (principiante) | 90 | 26 contenido + 4 reserva = 30 | 2027-03-01 |
+| **A — con diagnósticos aprobados** (la esperada para ti) | 72 | 24 contenido + 4 reserva = 28 | **2027-02-14** |
+| **B — módulo completo, sin saltar nada** (principiante) | 96 | 28 contenido + 4 reserva = 32 | 2027-03-14 |
 
 La ruta A asume que apruebas el diagnóstico de los módulos 01, 03, 04, 11 y 13 —
 razonable dado el trabajo de `archive/sre-track/`. **Si no lo apruebas, no pasa
@@ -24,7 +24,7 @@ compran los diagnósticos.
 
 ### Reajuste de pesos (2026-08-02)
 
-Tres cambios que suman **cero bloques netos**, así que la fecha no se mueve:
+**Ronda 1 — cero bloques netos:**
 
 | Cambio | Bloques | Motivo |
 |---|---|---|
@@ -32,7 +32,49 @@ Tres cambios que suman **cero bloques netos**, así que la fecha no se mueve:
 | Jenkins & Ansible 4 → 3 | −1 | Leer un Jenkinsfile sabiendo Actions es traducción, no aprendizaje. Dentro del módulo, 1 bloque a Jenkins y 2 a Ansible, que no es legacy |
 | **Game Day I** tras el módulo 08 | +2 | El módulo de mayor valor estaba solo al final, donde el protocolo de atraso lo sacrifica |
 
-No optimices para llegar el 1 de febrero. Optimiza para que los criterios de
+**Ronda 2 — +6 bloques, de 26 a 28 semanas:**
+
+| Cambio | Bloques | Motivo |
+|---|---|---|
+| **Módulo 08b — eBPF y profiling continuo** | +4 | Responde la pregunta que la instrumentación no puede: qué haces cuando no puedes tocar el código. Va justo después del 08 para que el contraste sea agudo |
+| Módulo 14 — unit economics y rightsizing | +1 | El coste es una restricción sobre decisiones de fiabilidad. Coste por 1.000 sondeos, derivado de datos que ya generaste. $0 |
+| Módulo 16 — un experimento diseñado | +1 | Los Game Days son simulacros: entrenan reacción. Un experimento con hipótesis y estado estable declarado antes es otra disciplina, y es la que escala |
+
+Descartado en esta ronda: **plataformas internas / IDP**. Montar un Backstage en
+dos semanas produce algo superficial, y superficial es peor que ausente — invita
+a decir en una entrevista que sabes algo que no sabes.
+
+---
+
+## Checkpoints — la red de seguridad del capstone
+
+El capstone acumula, y eso es lo que lo hace valioso. También lo convierte en un
+punto único de fallo: una plataforma a medio migrar en el módulo 09 puede
+bloquear el 10 por razones que no tienen nada que ver con aprender el 10.
+
+**La regla: al cerrar cada módulo, etiquetas el estado bueno conocido.**
+
+```bash
+./scripts/checkpoint.sh save 05
+```
+
+Si un módulo posterior se atasca por deuda de plataforma y no por el material:
+
+```bash
+./scripts/checkpoint.sh list
+./scripts/checkpoint.sh diff 05        # qué cambió desde entonces
+./scripts/checkpoint.sh restore 05     # rama nueva desde ese estado
+./scripts/checkpoint.sh rebuild 05     # cluster desde cero hasta ahí
+```
+
+`restore` crea una **rama**, nunca descarta tu trabajo posterior: recuperarte de
+un estado malo no puede costarte lo que te llevó hasta él.
+
+Esto **no** permite saltarse un módulo — la etiqueta solo existe si lo cerraste
+bien. Lo único que hace es impedir que un problema de entorno se convierta en un
+problema de currículo.
+
+No optimices para llegar el 14 de febrero. Optimiza para que los criterios de
 salida se cumplan de verdad. La fecha es maleable; el criterio no.
 
 ---
@@ -54,38 +96,44 @@ Leyenda de bloques: `05×3` = tres bloques del módulo 05 esa semana.
 | 9 | 2026-09-28 | `06×1` `07×2` | **Postgres con estado, drill de backup** |
 | 10 | 2026-10-05 | `07×2` `08×1` | **SLO definido, recording rule 8s → <1s** |
 | 11 | 2026-10-12 | `08×3` | |
-| 12 | 2026-10-19 | `08×2` `09×1` | **Trazas propias, exemplars métrica→traza** |
-| 13 | 2026-10-26 | — | 🟡 **RESERVA** + repaso 30 d (mód. 05–06) |
-| 14 | 2026-11-02 | `08b×2` `09×1` | 🔥 **Game Day I + postmortem** |
-| 15 | 2026-11-09 | `09×2` `10×1` | **Pipeline verde con SBOM** |
-| 16 | 2026-11-16 | `10×3` | **GitOps: Argo CD gobierna el cluster** |
-| 17 | 2026-11-23 | `10×1` `11×2` | **Canary con rollback automático por SLO** |
-| 18 | 2026-11-30 | `12×3` | |
-| 19 | 2026-12-07 | `12×2` `13×1` | **Solo imágenes firmadas admitidas** |
-| 20 | 2026-12-14 | `13×2` `14×1` | Infra como módulos Terraform |
+| 12 | 2026-10-19 | `08×2` `08b×1` | **Trazas propias, exemplars métrica→traza** |
+| 13 | 2026-10-26 | — | 🟡 **RESERVA** + repaso 30 d (mód. 05–07) |
+| 14 | 2026-11-02 | `08b×3` | **Flamegraph de un pod vivo, sin tocarlo** |
+| 15 | 2026-11-09 | `08c×2` `09×1` | 🔥 **Game Day I + postmortem** |
+| 16 | 2026-11-16 | `09×3` | **Pipeline verde con SBOM** |
+| 17 | 2026-11-23 | `10×3` | |
+| 18 | 2026-11-30 | `10×2` `11×1` | **GitOps: Argo CD gobierna el cluster** |
+| 19 | 2026-12-07 | `11×1` `12×2` | **Canary con rollback automático por SLO** |
+| 20 | 2026-12-14 | `12×3` | **Solo imágenes firmadas admitidas** |
 | 21 | 2026-12-21 | — | 🎄 **RESERVA** — Navidad |
 | 22 | 2026-12-28 | — | 🎄 **RESERVA** — Navidad |
-| 23 | 2027-01-04 | `14×3` | |
-| 24 | 2027-01-11 | `14×2` `15×1` | **Pulse en GKE, y destruido** |
-| 25 | 2027-01-18 | `15×2` `16×1` | Comparativa Jenkins vs Actions |
-| 26 | 2027-01-25 | `16×3` | 🏁 **Game Day II + postmortem** |
+| 23 | 2027-01-04 | `13×3` | Infra como módulos Terraform |
+| 24 | 2027-01-11 | `14×3` | |
+| 25 | 2027-01-18 | `14×3` | **Pulse en GKE, y destruido** |
+| 26 | 2027-01-25 | `14×1` `15×2` | Coste por 1.000 sondeos |
+| 27 | 2027-02-01 | `15×1` `16×2` | Comparativa Jenkins vs Actions |
+| 28 | 2027-02-08 | `16×3` | 🏁 **Game Day II + revisión de arquitectura** |
 
 Las semanas 21 y 22 son reserva por calendario, no por diseño. Si llegas
 adelantado, adelanta el módulo 14 — es el único con costo y conviene ejecutarlo
 concentrado.
 
-**Sobre la semana 12:** el primer bloque del módulo 09 se coloca antes del Game
-Day a propósito. El 09 depende del 03, no del 08, así que no hay razón para
-esperar, y deja el Game Day entero dentro de una sola semana en vez de partido
-por la semana de reserva. Un postmortem escrito dos semanas después del incidente
-no sirve.
+**Sobre la semana 15:** el Game Day I cabe entero en una sola semana, a
+propósito. El bloque suelto del módulo 09 va detrás porque el 09 depende del 03,
+no del 08, así que no hay razón para esperarlo. Un postmortem escrito dos semanas
+después del incidente es ficción, y partir el ejercicio por una semana de reserva
+garantizaría justo eso.
 
-**Sobre el Game Day I (semana 14):** es el cambio de diseño más importante del
-plan. El módulo de mayor valor —depurar algo que no habías visto, bajo presión—
-estaba solo al final, en la posición exacta que el protocolo de atraso
-sacrifica. Ahora hay uno a mitad de camino, contra un sistema de seis capas en
-vez de doce, y los dos postmortems separados por catorce semanas son la medida
-más honesta de progreso de todo el repo.
+**Sobre el Game Day I:** es el cambio de diseño más importante del plan. El
+módulo de mayor valor —depurar algo que no habías visto, bajo presión— estaba
+solo al final, en la posición exacta que el protocolo de atraso sacrifica. Ahora
+hay uno a mitad de camino, contra un sistema de siete capas en vez de trece, y
+los dos postmortems separados por trece semanas son la medida más honesta de
+progreso de todo el repo.
+
+**Sobre el módulo 08b (eBPF):** se parte entre las semanas 12 y 14 por la reserva
+del medio, y no pasa nada — no es un ejercicio de sesión única. El Game Day sí lo
+es, y por eso se protegió.
 
 ---
 
@@ -108,11 +156,11 @@ buscar" y "errores que cometí" de cada `NOTAS.md`, más `PREGUNTAS.md`.
 | Cuándo | Semana | Repasa | Formato |
 |---|---|---|---|
 | 30 d | 7 | módulos 00–02 | Rehacer el break-fix de memoria, cronometrado |
-| 30 d | 13 | módulos 05–06 | Ídem + preguntas de entrevista en voz alta |
+| 30 d | 13 | módulos 05–07 | Ídem + preguntas de entrevista en voz alta |
 | 90 d | 13 | módulos 00–02 | Levantar Pulse desde cero sin mirar el README |
-| 30 d | 21 | módulos 09–12 | Break-fix + explicar trade-offs |
+| 30 d | 21 | módulos 08b–12 | Break-fix + explicar trade-offs |
 | 90 d | 21 | módulos 05–08 | Reconstruir la capa de observabilidad de cero |
-| 90 d | 26 | módulos 09–13 | Integrado en el Game Day |
+| 90 d | 28 | módulos 09–14 | Integrado en el Game Day II |
 
 **La regla del repaso:** si tienes que abrir el README de un módulo que ya
 cerraste, ese módulo no estaba cerrado. Marca su nivel a la baja en `TRACKER.md`

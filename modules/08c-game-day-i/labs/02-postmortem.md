@@ -10,7 +10,7 @@ tiene valor.
 
 ## El entregable
 
-`modules/08b-game-day-i/POSTMORTEM-1.md`, en inglés, con esta estructura.
+`modules/08c-game-day-i/POSTMORTEM-1.md`, en inglés, con esta estructura.
 
 ### 1. Resumen
 

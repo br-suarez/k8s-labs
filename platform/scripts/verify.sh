@@ -236,9 +236,43 @@ group_traces() {
     [ \"\$pct\" -lt 80 ] || { echo \"queue at \${pct}%\"; exit 1; }"
 }
 
+# --- group: profiling ---------------------------------------------------------
+# Added in module 08b. Everything here is obtained without modifying Pulse,
+# which is the point of that module.
+group_profiling() {
+  log "${DIM}== profiling ==${RESET}"
+  if ! have kubectl || ! kubectl cluster-info >/dev/null 2>&1; then
+    skip "profiles are being collected" "no reachable cluster"
+    return
+  fi
+  local ns=${PROFILING_NAMESPACE:-profiling}
+  if ! kubectl get namespace "$ns" >/dev/null 2>&1; then
+    skip "profiles are being collected" "namespace $ns not found"
+    return
+  fi
+
+  check "profiler is running" \
+    kubectl wait --for=condition=Available --timeout=30s deployment --all -n "$ns"
+
+  # The accept-queue counters from the module 08b break-fix. node-exporter has
+  # exposed these all along; nobody looks at them until they already know.
+  local prom=${PROMETHEUS_URL:-http://localhost:9090}
+  if curl -fsS -o /dev/null --max-time 3 "$prom/-/ready" 2>/dev/null; then
+    check "no TCP accept-queue overflows" bash -c "
+      n=\$(curl -fsS '$prom/api/v1/query?query=increase(node_netstat_TcpExt_ListenOverflows%5B10m%5D)' \
+        | grep -o '\"value\"' | wc -l)
+      v=\$(curl -fsS '$prom/api/v1/query?query=sum(increase(node_netstat_TcpExt_ListenOverflows%5B10m%5D))' \
+        | sed -n 's/.*\"value\":\[[0-9.]*,\"\([0-9.]*\)\".*/\1/p')
+      [ -z \"\$v\" ] && { echo 'metric not present — is node-exporter scraped?'; exit 1; }
+      awk -v x=\"\$v\" 'BEGIN { if (x+0 > 0) { print \"listen overflows in last 10m: \" x; exit 1 } }'"
+  else
+    skip "no TCP accept-queue overflows" "Prometheus not reachable"
+  fi
+}
+
 # --- registry -----------------------------------------------------------------
 # Order matters: cheap checks first so failures surface fast.
-ALL_GROUPS=(tooling build scripts nginx gateway k8s storage slo traces)
+ALL_GROUPS=(tooling build scripts nginx gateway k8s storage slo traces profiling)
 
 usage() {
   log "usage: $0 [group...]"

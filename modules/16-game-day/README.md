@@ -1,6 +1,6 @@
 # Module 16 — Game Day II & Hardening
 
-**4 blocks.** Requires everything, including [Game Day I](../08b-game-day-i/README.md).
+**5 blocks.** Requires everything, including [Game Day I](../08c-game-day-i/README.md).
 
 No new technology. This module is the exam, and it is the module that produces
 the artifact you actually show people.
@@ -54,11 +54,32 @@ Rules:
 | # | Lab | Level | Time |
 |---|---|---|---|
 | 00 | Repaso: full-stack rebuild from empty cluster to running Pulse, timed | CORE | 60 min |
-| 01 | Game Day round 1 — three failures | CORE | 60 min |
-| 02 | Game Day round 2 — two failures, harder | CORE | 50 min |
-| 03 | Postmortems and remediation | CORE | 50 min |
-| 04 | SLO review: did the platform meet its own targets across the track? | CORE | 40 min |
-| 05 | The architecture review presentation | CORE | 45 min |
+| 01 | **A designed experiment** — hypothesis first, then break it | CORE | 55 min |
+| 02 | Game Day round 1 — three failures | CORE | 60 min |
+| 03 | Game Day round 2 — two failures, harder | CORE | 50 min |
+| 04 | Postmortems and remediation | CORE | 50 min |
+| 05 | SLO review: did the platform meet its own targets across the track? | CORE | 40 min |
+| 06 | The architecture review presentation | CORE | 45 min |
+
+### Lab 01 — the difference between a drill and an experiment
+
+Game Day I and rounds 1–2 here are **drills**: something breaks, you react. That
+trains diagnosis, which is most of the job.
+
+Chaos engineering proper is the other thing, and it is a discipline rather than
+an exercise:
+
+1. Define the **steady state** as a measurable property — not "the system is up",
+   but "the probe-freshness SLI stays above 99.5%".
+2. State a **hypothesis**: "if we lose one worker node, steady state holds."
+3. Define the **blast radius** and the abort condition *before* running.
+4. Run the smallest experiment that could falsify the hypothesis.
+5. Either the hypothesis held — which is evidence, not luck — or you found a
+   real weakness.
+
+The difference that matters: a drill tells you how good you are at reacting; an
+experiment tells you whether the system's resilience claims are true. You need
+both, and only one of them scales.
 
 ## Capstone: final state
 
