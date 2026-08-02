@@ -1,0 +1,46 @@
+# Separate ServiceMonitors for canary and stable.
+#
+# kube-prometheus-stack labels every scraped sample with `service=<Service name>`,
+# so scraping through two different Services is what gives the analysis query a
+# way to say "canary only". Scraping the pods directly (a PodMonitor) would
+# collapse both versions into one series and make the canary unmeasurable.
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: slo-demo-canary
+  namespace: canary-demo
+  labels:
+    app: slo-demo
+spec:
+  selector:
+    matchLabels:
+      app: slo-demo
+      role: canary
+  namespaceSelector:
+    matchNames:
+      - canary-demo
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: slo-demo-stable
+  namespace: canary-demo
+  labels:
+    app: slo-demo
+spec:
+  selector:
+    matchLabels:
+      app: slo-demo
+      role: stable
+  namespaceSelector:
+    matchNames:
+      - canary-demo
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

@@ -1,0 +1,291 @@
+----- poll #1 @ 04:38:13Z -----
+argocd: Synced   Suspended   1628143b88fcfb63ee228d663682e65f73af8cff
+
+Name:            slo-demo
+Namespace:       canary-demo
+Status:          ॥ Paused
+Message:         CanaryPauseStep
+Strategy:        Canary
+  Step:          1/5
+  SetWeight:     20
+  ActualWeight:  20
+Images:          slo-demo:v1 (stable)
+                 slo-demo:v2-bad (canary)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       1
+  Ready:         5
+  Available:     5
+
+NAME                                  KIND         STATUS     AGE   INFO
+⟳ slo-demo                            Rollout      ॥ Paused   3m3s  
+├──# revision:2                                                     
+│  ├──⧉ slo-demo-6c48cb6478           ReplicaSet   ✔ Healthy  7s    canary
+│  │  └──□ slo-demo-6c48cb6478-wqwh8  Pod          ✔ Running  7s    ready:1/1
+│  └──α slo-demo-6c48cb6478-2         AnalysisRun  ◌ Running  5s    
+└──# revision:1                                                     
+   └──⧉ slo-demo-554f85ff79           ReplicaSet   ✔ Healthy  3m3s  stable
+      ├──□ slo-demo-554f85ff79-8pcd2  Pod          ✔ Running  3m3s  ready:1/1
+      ├──□ slo-demo-554f85ff79-d4wc2  Pod          ✔ Running  3m3s  ready:1/1
+      ├──□ slo-demo-554f85ff79-d857v  Pod          ✔ Running  3m3s  ready:1/1
+      └──□ slo-demo-554f85ff79-h5kkm  Pod          ✔ Running  3m3s  ready:1/1
+
+analysis runs:
+NAME                    STATUS    STARTED
+slo-demo-6c48cb6478-2   Running   2026-08-02T04:38:08Z
+
+measurements:
+  analysisrun: slo-demo-6c48cb6478-2
+
+----- poll #2 @ 04:38:34Z -----
+argocd: Synced   Suspended   1628143b88fcfb63ee228d663682e65f73af8cff
+
+Name:            slo-demo
+Namespace:       canary-demo
+Status:          ॥ Paused
+Message:         CanaryPauseStep
+Strategy:        Canary
+  Step:          1/5
+  SetWeight:     20
+  ActualWeight:  20
+Images:          slo-demo:v1 (stable)
+                 slo-demo:v2-bad (canary)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       1
+  Ready:         5
+  Available:     5
+
+NAME                                  KIND         STATUS     AGE    INFO
+⟳ slo-demo                            Rollout      ॥ Paused   3m25s  
+├──# revision:2                                                      
+│  ├──⧉ slo-demo-6c48cb6478           ReplicaSet   ✔ Healthy  29s    canary
+│  │  └──□ slo-demo-6c48cb6478-wqwh8  Pod          ✔ Running  29s    ready:1/1
+│  └──α slo-demo-6c48cb6478-2         AnalysisRun  ◌ Running  27s    
+└──# revision:1                                                      
+   └──⧉ slo-demo-554f85ff79           ReplicaSet   ✔ Healthy  3m25s  stable
+      ├──□ slo-demo-554f85ff79-8pcd2  Pod          ✔ Running  3m25s  ready:1/1
+      ├──□ slo-demo-554f85ff79-d4wc2  Pod          ✔ Running  3m25s  ready:1/1
+      ├──□ slo-demo-554f85ff79-d857v  Pod          ✔ Running  3m25s  ready:1/1
+      └──□ slo-demo-554f85ff79-h5kkm  Pod          ✔ Running  3m25s  ready:1/1
+
+analysis runs:
+NAME                    STATUS    STARTED
+slo-demo-6c48cb6478-2   Running   2026-08-02T04:38:08Z
+
+measurements:
+  analysisrun: slo-demo-6c48cb6478-2
+
+----- poll #3 @ 04:38:57Z -----
+argocd: Synced   Suspended   1628143b88fcfb63ee228d663682e65f73af8cff
+
+Name:            slo-demo
+Namespace:       canary-demo
+Status:          ॥ Paused
+Message:         CanaryPauseStep
+Strategy:        Canary
+  Step:          1/5
+  SetWeight:     20
+  ActualWeight:  20
+Images:          slo-demo:v1 (stable)
+                 slo-demo:v2-bad (canary)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       1
+  Ready:         5
+  Available:     5
+
+NAME                                  KIND         STATUS     AGE    INFO
+⟳ slo-demo                            Rollout      ॥ Paused   3m48s  
+├──# revision:2                                                      
+│  ├──⧉ slo-demo-6c48cb6478           ReplicaSet   ✔ Healthy  52s    canary
+│  │  └──□ slo-demo-6c48cb6478-wqwh8  Pod          ✔ Running  52s    ready:1/1
+│  └──α slo-demo-6c48cb6478-2         AnalysisRun  ◌ Running  50s    
+└──# revision:1                                                      
+   └──⧉ slo-demo-554f85ff79           ReplicaSet   ✔ Healthy  3m48s  stable
+      ├──□ slo-demo-554f85ff79-8pcd2  Pod          ✔ Running  3m48s  ready:1/1
+      ├──□ slo-demo-554f85ff79-d4wc2  Pod          ✔ Running  3m48s  ready:1/1
+      ├──□ slo-demo-554f85ff79-d857v  Pod          ✔ Running  3m48s  ready:1/1
+      └──□ slo-demo-554f85ff79-h5kkm  Pod          ✔ Running  3m48s  ready:1/1
+
+analysis runs:
+NAME                    STATUS    STARTED
+slo-demo-6c48cb6478-2   Running   2026-08-02T04:38:08Z
+
+measurements:
+  analysisrun: slo-demo-6c48cb6478-2
+
+----- poll #4 @ 04:39:20Z -----
+argocd: Synced   Suspended   1628143b88fcfb63ee228d663682e65f73af8cff
+
+Name:            slo-demo
+Namespace:       canary-demo
+Status:          ॥ Paused
+Message:         CanaryPauseStep
+Strategy:        Canary
+  Step:          1/5
+  SetWeight:     20
+  ActualWeight:  20
+Images:          slo-demo:v1 (stable)
+                 slo-demo:v2-bad (canary)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       1
+  Ready:         5
+  Available:     5
+
+NAME                                  KIND         STATUS     AGE    INFO
+⟳ slo-demo                            Rollout      ॥ Paused   4m11s  
+├──# revision:2                                                      
+│  ├──⧉ slo-demo-6c48cb6478           ReplicaSet   ✔ Healthy  75s    canary
+│  │  └──□ slo-demo-6c48cb6478-wqwh8  Pod          ✔ Running  75s    ready:1/1
+│  └──α slo-demo-6c48cb6478-2         AnalysisRun  ◌ Running  73s    ✖ 1
+└──# revision:1                                                      
+   └──⧉ slo-demo-554f85ff79           ReplicaSet   ✔ Healthy  4m11s  stable
+      ├──□ slo-demo-554f85ff79-8pcd2  Pod          ✔ Running  4m11s  ready:1/1
+      ├──□ slo-demo-554f85ff79-d4wc2  Pod          ✔ Running  4m11s  ready:1/1
+      ├──□ slo-demo-554f85ff79-d857v  Pod          ✔ Running  4m11s  ready:1/1
+      └──□ slo-demo-554f85ff79-h5kkm  Pod          ✔ Running  4m11s  ready:1/1
+
+analysis runs:
+NAME                    STATUS    STARTED
+slo-demo-6c48cb6478-2   Running   2026-08-02T04:38:08Z
+
+measurements:
+  analysisrun: slo-demo-6c48cb6478-2
+  metric=availability-sli phase=Running successful=0 failed=1 error=0
+    [Failed] value=[0.20234436431208763]  at 2026-08-02T04:39:09Z
+
+----- poll #5 @ 04:39:42Z -----
+argocd: Synced   Suspended   1628143b88fcfb63ee228d663682e65f73af8cff
+
+Name:            slo-demo
+Namespace:       canary-demo
+Status:          ॥ Paused
+Message:         CanaryPauseStep
+Strategy:        Canary
+  Step:          3/5
+  SetWeight:     60
+  ActualWeight:  60
+Images:          slo-demo:v1 (stable)
+                 slo-demo:v2-bad (canary)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       3
+  Ready:         5
+  Available:     5
+
+NAME                                  KIND         STATUS     AGE    INFO
+⟳ slo-demo                            Rollout      ॥ Paused   4m34s  
+├──# revision:2                                                      
+│  ├──⧉ slo-demo-6c48cb6478           ReplicaSet   ✔ Healthy  98s    canary
+│  │  ├──□ slo-demo-6c48cb6478-wqwh8  Pod          ✔ Running  98s    ready:1/1
+│  │  ├──□ slo-demo-6c48cb6478-jppzh  Pod          ✔ Running  4s     ready:1/1
+│  │  └──□ slo-demo-6c48cb6478-qwl9g  Pod          ✔ Running  4s     ready:1/1
+│  └──α slo-demo-6c48cb6478-2         AnalysisRun  ◌ Running  96s    ✖ 2
+└──# revision:1                                                      
+   └──⧉ slo-demo-554f85ff79           ReplicaSet   ✔ Healthy  4m34s  stable
+      ├──□ slo-demo-554f85ff79-d857v  Pod          ✔ Running  4m34s  ready:1/1
+      └──□ slo-demo-554f85ff79-h5kkm  Pod          ✔ Running  4m34s  ready:1/1
+
+analysis runs:
+NAME                    STATUS    STARTED
+slo-demo-6c48cb6478-2   Running   2026-08-02T04:38:08Z
+
+measurements:
+  analysisrun: slo-demo-6c48cb6478-2
+  metric=availability-sli phase=Running successful=0 failed=2 error=0
+    [Failed] value=[0.20234436431208763]  at 2026-08-02T04:39:09Z
+    [Failed] value=[0.1973940101127966]  at 2026-08-02T04:39:40Z
+
+----- poll #6 @ 04:40:05Z -----
+argocd: Synced   Suspended   1628143b88fcfb63ee228d663682e65f73af8cff
+
+Name:            slo-demo
+Namespace:       canary-demo
+Status:          ॥ Paused
+Message:         CanaryPauseStep
+Strategy:        Canary
+  Step:          3/5
+  SetWeight:     60
+  ActualWeight:  60
+Images:          slo-demo:v1 (stable)
+                 slo-demo:v2-bad (canary)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       3
+  Ready:         5
+  Available:     5
+
+NAME                                  KIND         STATUS     AGE    INFO
+⟳ slo-demo                            Rollout      ॥ Paused   4m56s  
+├──# revision:2                                                      
+│  ├──⧉ slo-demo-6c48cb6478           ReplicaSet   ✔ Healthy  2m     canary
+│  │  ├──□ slo-demo-6c48cb6478-wqwh8  Pod          ✔ Running  2m     ready:1/1
+│  │  ├──□ slo-demo-6c48cb6478-jppzh  Pod          ✔ Running  26s    ready:1/1
+│  │  └──□ slo-demo-6c48cb6478-qwl9g  Pod          ✔ Running  26s    ready:1/1
+│  └──α slo-demo-6c48cb6478-2         AnalysisRun  ◌ Running  118s   ✖ 2
+└──# revision:1                                                      
+   └──⧉ slo-demo-554f85ff79           ReplicaSet   ✔ Healthy  4m56s  stable
+      ├──□ slo-demo-554f85ff79-d857v  Pod          ✔ Running  4m56s  ready:1/1
+      └──□ slo-demo-554f85ff79-h5kkm  Pod          ✔ Running  4m56s  ready:1/1
+
+analysis runs:
+NAME                    STATUS    STARTED
+slo-demo-6c48cb6478-2   Running   2026-08-02T04:38:08Z
+
+measurements:
+  analysisrun: slo-demo-6c48cb6478-2
+  metric=availability-sli phase=Running successful=0 failed=2 error=0
+    [Failed] value=[0.20234436431208763]  at 2026-08-02T04:39:09Z
+    [Failed] value=[0.1973940101127966]  at 2026-08-02T04:39:40Z
+
+----- poll #7 @ 04:40:28Z -----
+argocd: Synced   Degraded   1628143b88fcfb63ee228d663682e65f73af8cff
+
+Name:            slo-demo
+Namespace:       canary-demo
+Status:          ✖ Degraded
+Message:         RolloutAborted: Rollout aborted update to revision 2: Background analysis phase error/failed: Metric "availability-sli" assessed Failed due to failed (3) > failureLimit (2)
+Strategy:        Canary
+  Step:          0/5
+  SetWeight:     0
+  ActualWeight:  0
+Images:          slo-demo:v1 (stable)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       0
+  Ready:         5
+  Available:     5
+
+NAME                                  KIND         STATUS        AGE    INFO
+⟳ slo-demo                            Rollout      ✖ Degraded    5m19s  
+├──# revision:2                                                         
+│  ├──⧉ slo-demo-6c48cb6478           ReplicaSet   • ScaledDown  2m23s  canary
+│  └──α slo-demo-6c48cb6478-2         AnalysisRun  ✖ Failed      2m21s  ✖ 3
+└──# revision:1                                                         
+   └──⧉ slo-demo-554f85ff79           ReplicaSet   ✔ Healthy     5m19s  stable
+      ├──□ slo-demo-554f85ff79-d857v  Pod          ✔ Running     5m19s  ready:1/1
+      ├──□ slo-demo-554f85ff79-h5kkm  Pod          ✔ Running     5m19s  ready:1/1
+      ├──□ slo-demo-554f85ff79-69xvw  Pod          ✔ Running     18s    ready:1/1
+      ├──□ slo-demo-554f85ff79-h9667  Pod          ✔ Running     18s    ready:1/1
+      └──□ slo-demo-554f85ff79-jgztj  Pod          ✔ Running     18s    ready:1/1
+
+analysis runs:
+NAME                    STATUS   STARTED
+slo-demo-6c48cb6478-2   Failed   2026-08-02T04:38:08Z
+
+measurements:
+  analysisrun: slo-demo-6c48cb6478-2
+  metric=availability-sli phase=Failed successful=0 failed=3 error=0
+    [Failed] value=[0.20234436431208763]  at 2026-08-02T04:39:09Z
+    [Failed] value=[0.1973940101127966]  at 2026-08-02T04:39:40Z
+    [Failed] value=[0.1973249632292684]  at 2026-08-02T04:40:11Z
+

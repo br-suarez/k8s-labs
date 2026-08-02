@@ -1,0 +1,94 @@
+# A Rollout, not a Deployment.
+#
+# A Deployment's rolling update has exactly one safety mechanism: readiness
+# probes. It will happily replace every pod with a build that returns 500s, as
+# long as the process starts and answers /healthz. There is no gate, no
+# measurement, and no automatic way back.
+#
+# A Rollout keeps the same pod spec but replaces the update algorithm with
+# explicit steps and — the part that matters — analysis between them.
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: slo-demo
+  namespace: canary-demo
+  labels:
+    app: slo-demo
+spec:
+  replicas: 5
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: slo-demo
+
+  strategy:
+    canary:
+      canaryService: slo-demo-canary
+      stableService: slo-demo-stable
+
+      # Background analysis: runs continuously alongside the steps rather than
+      # only at one checkpoint. If the SLI breaches at ANY point during the
+      # rollout the run fails and the Rollout aborts — it does not have to wait
+      # for the next pause to notice.
+      analysis:
+        templates:
+          - templateName: slo-availability
+        # Start once the first canary pod is actually receiving traffic.
+        startingStep: 1
+        args:
+          - name: canary-service
+            value: slo-demo-canary
+
+      steps:
+        # 1 of 5 pods = 20% of traffic. Small enough that a bad release harms a
+        # minority of requests, large enough to produce a statistically usable
+        # error ratio within a minute at this request rate.
+        - setWeight: 20
+
+        # 180s, NOT 90s. This pause must outlast the analysis's time-to-verdict,
+        # which is:
+        #     initialDelay + (failureLimit + 1) x interval
+        #     60s          + (2 + 1)          x 30s        = 150s
+        #
+        # The first version of this file used 90s and the gate still caught the
+        # bad release — but only after the rollout had already advanced to 60%
+        # weight, because the steps kept moving while the analysis was still
+        # accumulating failures. The gate worked; the blast radius was 3x what
+        # the first step implied. A pause shorter than the time-to-verdict means
+        # the canary weight is decided by a timer, not by the measurement.
+        - pause: { duration: 180s }
+
+        - setWeight: 60
+        - pause: { duration: 90s }
+        - setWeight: 100
+
+  template:
+    metadata:
+      labels:
+        app: slo-demo
+    spec:
+      containers:
+        - name: slo-demo
+          image: slo-demo:v1
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 1
+            periodSeconds: 5

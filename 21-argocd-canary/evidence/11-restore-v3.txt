@@ -1,0 +1,3 @@
+==> rollout.yaml image set to slo-demo:v3-fixed
+==> pushed: 355cfa3 Restore v3-fixed after blast radius retest
+==> remote HEAD: 355cfa3

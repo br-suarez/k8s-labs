@@ -1,0 +1,51 @@
+# The deployment gate.
+#
+# This is the whole point of the lab: the canary is promoted or rejected based
+# on the SERVICE LEVEL INDICATOR defined in module 20, not on whether the pods
+# reached Ready. A pod can be Ready and healthy by every Kubernetes signal while
+# returning 500 to one request in five — readiness probes answer "is the process
+# up", SLIs answer "are users being served".
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: slo-availability
+  namespace: canary-demo
+spec:
+  args:
+    - name: canary-service
+  metrics:
+    - name: availability-sli
+      # Prometheus scrapes every 15s and the query uses a 1m rate window, so a
+      # brand-new canary has no usable data for the first minute. Without this
+      # delay the first few measurements return empty and burn the error budget
+      # of the analysis itself rather than measuring the release.
+      initialDelay: 60s
+      interval: 30s
+
+      # Tolerate 2 bad measurements before failing. One scrape landing badly
+      # should not roll back a good release; three consecutive 30s windows above
+      # the budget is a real regression.
+      failureLimit: 2
+
+      # An "error" is different from a "failure": error means the query itself
+      # returned nothing usable (no data, Prometheus unreachable). Allowing 5
+      # keeps a slow-starting canary from being killed for lack of traffic.
+      consecutiveErrorLimit: 5
+
+      # The condition IS the SLO: the canary's error ratio must stay inside the
+      # 0.5% error budget from module 20. Same number, same definition, enforced
+      # automatically at deploy time instead of discovered later on a dashboard.
+      successCondition: result[0] <= 0.005
+
+      provider:
+        prometheus:
+          address: http://kube-prom-stack-kube-prome-prometheus.monitoring.svc.cluster.local:9090
+          # Scoped to the canary Service only. Argo Rollouts rewrites that
+          # Service's selector to match just the canary pods, so this measures
+          # the new version in isolation rather than an average across both
+          # versions — an average would be diluted by the healthy stable pods
+          # and could pass a release that is failing 100% of its own traffic.
+          query: |
+            sum(rate(http_requests_total{service="{{args.canary-service}}",path="/api",status=~"5.."}[1m]))
+            /
+            sum(rate(http_requests_total{service="{{args.canary-service}}",path="/api"}[1m]))

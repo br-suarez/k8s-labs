@@ -1,0 +1,46 @@
+SCENARIO A RESULT — CANARY REJECTED, ROLLED BACK
+
+argocd: Synced   Degraded   1628143b88fcfb63ee228d663682e65f73af8cff
+
+Name:            slo-demo
+Namespace:       canary-demo
+Status:          ✖ Degraded
+Message:         RolloutAborted: Rollout aborted update to revision 2: Background analysis phase error/failed: Metric "availability-sli" assessed Failed due to failed (3) > failureLimit (2)
+Strategy:        Canary
+  Step:          0/5
+  SetWeight:     0
+  ActualWeight:  0
+Images:          slo-demo:v1 (stable)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       0
+  Ready:         5
+  Available:     5
+
+NAME                                  KIND         STATUS        AGE    INFO
+⟳ slo-demo                            Rollout      ✖ Degraded    5m21s  
+├──# revision:2                                                         
+│  ├──⧉ slo-demo-6c48cb6478           ReplicaSet   • ScaledDown  2m25s  canary
+│  └──α slo-demo-6c48cb6478-2         AnalysisRun  ✖ Failed      2m23s  ✖ 3
+└──# revision:1                                                         
+   └──⧉ slo-demo-554f85ff79           ReplicaSet   ✔ Healthy     5m21s  stable
+      ├──□ slo-demo-554f85ff79-d857v  Pod          ✔ Running     5m21s  ready:1/1
+      ├──□ slo-demo-554f85ff79-h5kkm  Pod          ✔ Running     5m21s  ready:1/1
+      ├──□ slo-demo-554f85ff79-69xvw  Pod          ✔ Running     20s    ready:1/1
+      ├──□ slo-demo-554f85ff79-h9667  Pod          ✔ Running     20s    ready:1/1
+      └──□ slo-demo-554f85ff79-jgztj  Pod          ✔ Running     20s    ready:1/1
+
+measurements:
+  analysisrun: slo-demo-6c48cb6478-2
+  metric=availability-sli phase=Failed successful=0 failed=3 error=0
+    [Failed] value=[0.20234436431208763]  at 2026-08-02T04:39:09Z
+    [Failed] value=[0.1973940101127966]  at 2026-08-02T04:39:40Z
+    [Failed] value=[0.1973249632292684]  at 2026-08-02T04:40:11Z
+
+pods now serving:
+slo-demo-554f85ff79-69xvw  slo-demo:v1
+slo-demo-554f85ff79-d857v  slo-demo:v1
+slo-demo-554f85ff79-h5kkm  slo-demo:v1
+slo-demo-554f85ff79-h9667  slo-demo:v1
+slo-demo-554f85ff79-jgztj  slo-demo:v1

@@ -1,0 +1,10 @@
+# slo-demo v2 — the release that regressed.
+#
+# Nothing about the binary changed. A configuration default shipped wrong, and
+# 20% of requests now fail. That is a 40x burn rate against the 0.5% error
+# budget from module 20, and it is exactly what the canary analysis must catch
+# before this reaches 100% of traffic.
+FROM slo-demo:v1
+
+ENV APP_VERSION=v2-bad
+ENV BASELINE_ERROR_RATE=0.20

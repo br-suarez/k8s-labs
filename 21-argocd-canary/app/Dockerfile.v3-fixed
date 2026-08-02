@@ -1,0 +1,9 @@
+# slo-demo v3 — the fix.
+#
+# Same binary again, with the error rate back to the v1 baseline. This is the
+# release the canary analysis should let through, proving the gate accepts good
+# deploys rather than simply blocking everything.
+FROM slo-demo:v1
+
+ENV APP_VERSION=v3-fixed
+ENV BASELINE_ERROR_RATE=0.001

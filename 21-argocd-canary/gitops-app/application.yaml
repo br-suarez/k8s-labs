@@ -1,0 +1,67 @@
+# The Argo CD Application that owns the canary deployment.
+#
+# This file is NOT part of the synced repo — it is the pointer at it, applied
+# once to the cluster. Committing it into the repo it syncs would be circular.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: slo-demo
+  namespace: argocd
+  finalizers:
+    # Ensures deleting the Application also removes what it deployed, rather
+    # than orphaning the Rollout and its ReplicaSets in the cluster.
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    # The in-cluster git daemon from platform/git-server.yaml. Anonymous git://
+    # is only acceptable because this daemon is unreachable outside the cluster.
+    repoURL: git://git-server.git-server.svc.cluster.local/gitops.git
+    targetRevision: main
+    path: .
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: canary-demo
+
+  syncPolicy:
+    automated:
+      # prune: remove resources deleted from Git.
+      prune: true
+      # selfHeal: revert manual kubectl changes back to what Git says. This is
+      # the setting that makes Git the actual source of truth rather than a
+      # suggestion — and the setting that requires the ignoreDifferences rule
+      # below to coexist with Argo Rollouts.
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        maxDuration: 1m
+
+  # WITHOUT THIS BLOCK THE CANARY CANNOT WORK.
+  #
+  # Argo Rollouts implements the canary/stable split by rewriting the selector
+  # of those two Services at runtime, appending the pod-template-hash of the
+  # relevant ReplicaSet. Git has no such hash — it cannot, the hash does not
+  # exist until the ReplicaSet does.
+  #
+  # So Argo CD sees a Service whose live selector differs from Git, calls it
+  # drift, and selfHeal reverts it. Rollouts immediately re-applies it. The two
+  # controllers fight, the canary Service ends up pointing at every pod, and the
+  # analysis silently measures stable+canary averaged together — which is worse
+  # than no analysis, because it looks like it is working.
+  ignoreDifferences:
+    - group: ""
+      kind: Service
+      name: slo-demo-canary
+      jsonPointers:
+        - /spec/selector
+    - group: ""
+      kind: Service
+      name: slo-demo-stable
+      jsonPointers:
+        - /spec/selector

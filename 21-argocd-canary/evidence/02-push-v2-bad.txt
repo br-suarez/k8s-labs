@@ -1,0 +1,5 @@
+SCENARIO A — DEPLOY slo-demo:v2-bad (20% error rate)
+
+==> rollout.yaml image set to slo-demo:v2-bad
+==> pushed: 1628143 Release v2: canary must reject this
+==> remote HEAD: 1628143
