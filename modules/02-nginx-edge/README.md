@@ -31,13 +31,13 @@ decision against alternatives.
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso (módulos 00–01) | CORE | 15 min |
-| 01 | Reverse proxy from an empty file — route `/` to pulse-web, `/api` to pulse-api, no copy-paste | CORE | 50 min |
-| 02 | TLS termination with a local CA; measure the handshake cost, compare TLS 1.2 vs 1.3 | CORE | 45 min |
-| 03 | Caching: make `/api/results` cacheable for 5s, prove the hit ratio, then find the request you must never cache | CORE | 50 min |
-| 04 | Log forensics: given a provided access log with a latency incident, find the cause using `$upstream_response_time` vs `$request_time` | CORE | 40 min |
-| 05 | Rate limiting and connection limits under load | EXTEND | 40 min |
-| 06 | `proxy_buffering` off for a streaming endpoint | DEEP | 30 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 00–01) | CORE | 15 min |
+| 01 | [Reverse proxy from an empty file](./labs/01-reverse-proxy.md) — and prove keepalive actually works | CORE | 50 min |
+| 02 | [TLS termination](./labs/02-tls.md) with a local CA; measure the handshake, TLS 1.2 vs 1.3 | CORE | 45 min |
+| 03 | [Caching](./labs/03-caching.md) — and the request you must never cache | CORE | 50 min |
+| 04 | [Log forensics](./labs/04-log-forensics.md) — a real incident in a generated access log | CORE | 40 min |
+| 05 | [Rate limiting under load](./labs/05-rate-limiting.md) | EXTEND | 40 min |
+| 06 | [Buffering and streaming](./labs/06-buffering.md) | DEEP | 30 min |
 
 ## Capstone layer
 

@@ -122,9 +122,41 @@ group_k8s() {
       | awk '{ t=0; for (i=1; i<=NF; i++) t+=\$i; if (t>0) { print \"total restarts: \" t; exit 1 } }'"
 }
 
+# --- group: gateway -----------------------------------------------------------
+# Added in module 05. Replaces the nginx group once the edge is migrated.
+group_gateway() {
+  log "${DIM}== gateway api ==${RESET}"
+  if ! have kubectl || ! kubectl cluster-info >/dev/null 2>&1; then
+    skip "routes are attached" "no reachable cluster"
+    return
+  fi
+  if ! kubectl get crd httproutes.gateway.networking.k8s.io >/dev/null 2>&1; then
+    skip "routes are attached" "Gateway API CRDs not installed"
+    return
+  fi
+
+  local ns=${PULSE_NAMESPACE:-pulse}
+
+  check "gateway is programmed" bash -c "
+    kubectl get gateway -n '$ns' -o jsonpath='{.items[*].status.conditions[?(@.type==\"Programmed\")].status}' \
+      | grep -qw True"
+
+  # Both conditions must hold on every route. Accepted alone is not enough:
+  # a route can attach to a listener and still fail to resolve its backends.
+  check "every httproute is Accepted" bash -c "
+    bad=\$(kubectl get httproute -n '$ns' -o jsonpath='{range .items[*]}{.metadata.name}={.status.parents[0].conditions[?(@.type==\"Accepted\")].status}{\"\n\"}{end}' \
+      | grep -v '=True\$' || true)
+    [ -z \"\$bad\" ] || { echo \"\$bad\"; exit 1; }"
+
+  check "every httproute has ResolvedRefs" bash -c "
+    bad=\$(kubectl get httproute -n '$ns' -o jsonpath='{range .items[*]}{.metadata.name}={.status.parents[0].conditions[?(@.type==\"ResolvedRefs\")].status}{\"\n\"}{end}' \
+      | grep -v '=True\$' || true)
+    [ -z \"\$bad\" ] || { echo \"\$bad\"; exit 1; }"
+}
+
 # --- registry -----------------------------------------------------------------
 # Order matters: cheap checks first so failures surface fast.
-ALL_GROUPS=(tooling build scripts nginx k8s)
+ALL_GROUPS=(tooling build scripts nginx gateway k8s)
 
 usage() {
   log "usage: $0 [group...]"
@@ -133,12 +165,18 @@ usage() {
 }
 
 main() {
+  case "${1:-}" in
+    -h|--help) usage ;;
+  esac
+
   local groups=("$@")
   [ ${#groups[@]} -eq 0 ] && groups=("${ALL_GROUPS[@]}")
 
   local g
   for g in "${groups[@]}"; do
-    if ! printf '%s\n' "${ALL_GROUPS[@]}" | grep -qx "$g"; then
+    # `--` is required: a group name starting with a dash would otherwise be
+    # parsed by grep as an option.
+    if ! printf '%s\n' "${ALL_GROUPS[@]}" | grep -qx -- "$g"; then
       log "unknown group: $g"
       usage
     fi

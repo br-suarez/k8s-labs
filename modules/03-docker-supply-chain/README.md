@@ -29,13 +29,13 @@ these artifacts, and you cannot secure what you cannot describe.
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso (módulos 01–02) | CORE | 15 min |
-| 01 | Multi-stage from empty: pulse-api to distroless, under 25 MB, non-root | CORE | 45 min |
-| 02 | Layer archaeology: reorder a Dockerfile to make a code change rebuild 1 layer instead of 6; measure both | CORE | 40 min |
-| 03 | The container that dies on start — three provided broken images, diagnose each from symptoms only | CORE | 50 min |
-| 04 | Compose the stack: pulse-api, worker, web with healthchecks and correct `depends_on` conditions | CORE | 45 min |
-| 05 | Tags vs digests: prove a tag can move under you; pin by digest | CORE | 30 min |
-| 06 | Build reproducibility: same source, two builds, compare digests and explain any difference | EXTEND | 40 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 01–02) | CORE | 15 min |
+| 01 | [Multi-stage to distroless](./labs/01-multistage.md) — under 25 MB, non-root, working outbound TLS | CORE | 45 min |
+| 02 | [Layer archaeology](./labs/02-layer-archaeology.md) — the mechanism, not the rule | CORE | 40 min |
+| 03 | [Three containers that build clean and fail at runtime](./labs/03-broken-containers.md) | CORE | 50 min |
+| 04 | [Compose the stack](./labs/04-compose.md) with health-gated startup | CORE | 45 min |
+| 05 | [Tags are not identity](./labs/05-tags-vs-digests.md) | CORE | 30 min |
+| 06 | [Build reproducibility](./labs/06-reproducibility.md) | EXTEND | 40 min |
 
 ## Capstone layer
 

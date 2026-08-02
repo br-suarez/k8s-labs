@@ -41,15 +41,22 @@ the actual problem Gateway API solves.
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso (módulos 03–04) | CORE | 15 min |
-| 01 | Install Gateway API CRDs (v1.6.1, standard channel) and a controller; explain what the CRDs alone do and do not give you | CORE | 40 min |
-| 02 | First Gateway and HTTPRoute from the spec — documentation open, this once | CORE | 50 min |
-| 03 | Path and header routing for Pulse; retire the NGINX config from module 02 | CORE | 60 min |
-| 04 | **The migration document** — every Ingress field mapped to its Gateway equivalent, and the ones with none | CORE | 50 min |
-| 05 | Traffic splitting by weight — the mechanism module 11's canary is built on | CORE | 45 min |
-| 06 | Standard vs experimental channel: what is in each, and the risk of depending on experimental | EXTEND | 40 min |
-| 07 | `ReferenceGrant` and cross-namespace routing | EXTEND | 40 min |
-| 08 | Request mirroring to a shadow backend | DEEP | 30 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 03–04) | CORE | 15 min |
+| 01 | [CRDs and a controller](./labs/01-install.md) (v1.6.1, standard channel) — what the CRDs alone do and do not give you | CORE | 40 min |
+| 02 | [First Gateway and HTTPRoute](./labs/02-first-route.md) — documentation open, this once | CORE | 50 min |
+| 03 | [Retire NGINX](./labs/03-retire-nginx.md) — path and header routing for Pulse | CORE | 60 min |
+| 04 | [**The migration document**](./labs/04-migration-doc.md) — every Ingress field and annotation mapped, including the ones with no equivalent | CORE | 50 min |
+| 05 | [Traffic splitting by weight](./labs/05-traffic-splitting.md) — the mechanism module 11's canary is built on | CORE | 45 min |
+| 06 | [Standard vs experimental channel](./labs/06-channels.md) and the upgrade hazard | EXTEND | 40 min |
+| 07 | [`ReferenceGrant` and cross-namespace routing](./labs/07-cross-namespace.md) | EXTEND | 40 min |
+| 08 | [Request mirroring to a shadow backend](./labs/08-mirroring.md) | DEEP | 30 min |
+
+> **Channel note (verified 2026-08-02).** As of v1.6, `GatewayClass`, `Gateway`,
+> `HTTPRoute`, `GRPCRoute`, `TCPRoute`, `TLSRoute`, `UDPRoute`, `ReferenceGrant`
+> and `BackendTLSPolicy` are all at `v1` in the **standard** channel —
+> `BackendTLSPolicy` has been GA since v1.4. Guidance written before 2025 tends
+> to assume far more lives in experimental than actually does. Check the CRDs you
+> installed rather than trusting a blog post; lab 01 has you do exactly that.
 
 ## Capstone layer
 

@@ -29,13 +29,13 @@ lifecycle settings that make it survivable, not just running.
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso (módulos 02–03) | CORE | 15 min |
-| 01 | Deploy Pulse from scratch: Deployments, Services, ConfigMap, Secret | CORE | 50 min |
-| 02 | Probes done properly — and then a liveness probe tuned to cause a cascading restart under load. Watch it happen | CORE | 50 min |
-| 03 | Requests, limits and QoS: force an eviction, predict which pod dies first, verify | CORE | 45 min |
-| 04 | HPA on `autoscaling/v2` with a custom metric; explain why `v2beta2` manifests fail on any supported cluster | CORE | 40 min |
-| 05 | Trace a request end to end: Service → Endpoints → iptables/IPVS → container | EXTEND | 45 min |
-| 06 | `terminationGracePeriodSeconds` vs your app's drain time — measure dropped requests | EXTEND | 30 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 02–03) | CORE | 15 min |
+| 01 | [Deploy Pulse from scratch](./labs/01-deploy-pulse.md) | CORE | 50 min |
+| 02 | [Probes, and the cascading restart](./labs/02-probes.md) — reproduce it, do not just read about it | CORE | 50 min |
+| 03 | [Requests, limits and eviction](./labs/03-resources-qos.md) — predict first, then verify | CORE | 45 min |
+| 04 | [HPA on `autoscaling/v2`](./labs/04-hpa-v2.md) — meet the removed-API error deliberately | CORE | 40 min |
+| 05 | [Trace a request end to end](./labs/05-request-path.md) | EXTEND | 45 min |
+| 06 | [Grace periods and dropped requests](./labs/06-graceful-shutdown.md) | EXTEND | 30 min |
 
 ## Capstone layer
 
