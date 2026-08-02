@@ -1,0 +1,49 @@
+# Continuous traffic against /api.
+#
+# An SLI is a ratio, and a ratio over zero requests is NaN — not 100%. Without
+# steady traffic the recording rules produce no data and the burn-rate alerts
+# can never evaluate. Constant background load is a prerequisite for the lab,
+# not decoration.
+#
+# First attempt was `while true; do curl ...; done`, which only reached 13 req/s
+# across 4 pods: forking a curl process per request costs more than the request.
+# Using curl's URL globbing + -Z (parallel transfers) issues 200 requests from a
+# single process over reused connections, which is ~20x faster for the same CPU.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadgen
+  namespace: slo-demo
+  labels:
+    app: loadgen
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: loadgen
+  template:
+    metadata:
+      labels:
+        app: loadgen
+    spec:
+      containers:
+        - name: loadgen
+          image: curlimages/curl:8.10.1
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "loadgen starting against http://slo-demo:8080/api"
+              while true; do
+                # [1-200] is curl URL globbing: one process, 200 requests.
+                # -Z runs them in parallel, --parallel-max caps concurrency so
+                # the generator does not become the bottleneck being measured.
+                curl -s -Z --parallel-max 16 --max-time 10 \
+                  "http://slo-demo:8080/api?i=[1-200]" > /dev/null 2>&1 || true
+              done
+          resources:
+            requests:
+              cpu: 100m
+              memory: 32Mi
+            limits:
+              memory: 64Mi

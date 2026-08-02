@@ -1,0 +1,204 @@
+{
+  "title": "slo-demo — SLO & Error Budget",
+  "uid": "slo-demo-errorbudget",
+  "tags": ["slo", "sre", "error-budget"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": { "text": "Prometheus", "value": "Prometheus" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Error budget — is there room to ship?",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "type": "gauge",
+      "title": "Availability error budget remaining (6h lab window)",
+      "description": "1.0 = untouched budget. Policy: below 0.25 non-critical releases pause. Negative means the SLO is already missed for this window.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 1 },
+      "targets": [
+        {
+          "expr": "slo:availability_error_budget_remaining:ratio6h{service=\"slo-demo\"}",
+          "legendFormat": "budget remaining",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": -0.25,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 0.25 },
+              { "color": "green", "value": 0.5 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Burn rate — how fast is the budget being spent?",
+      "description": "1x spends the whole 28d budget exactly at the end of the window. 14.4x exhausts it in under 2 days and pages.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 1 },
+      "targets": [
+        {
+          "expr": "slo:availability_burn_rate:1h{service=\"slo-demo\"}",
+          "legendFormat": "1h burn rate",
+          "refId": "A"
+        },
+        {
+          "expr": "slo:availability_burn_rate:6h{service=\"slo-demo\"}",
+          "legendFormat": "6h burn rate",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 5 },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "orange", "value": 6 },
+              { "color": "red", "value": 14.4 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }
+      }
+    },
+    {
+      "id": 4,
+      "type": "row",
+      "title": "SLIs — the two things users notice",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Availability SLI — error ratio vs 0.5% budget",
+      "description": "Red band at 7.2% is the fast-burn page threshold (14.4 x 0.005).",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "targets": [
+        { "expr": "slo:availability_error:ratio_rate5m{service=\"slo-demo\"}", "legendFormat": "5m window", "refId": "A" },
+        { "expr": "slo:availability_error:ratio_rate1h{service=\"slo-demo\"}", "legendFormat": "1h window", "refId": "B" },
+        { "expr": "vector(0.005)", "legendFormat": "error budget (0.5%)", "refId": "C" },
+        { "expr": "vector(0.072)", "legendFormat": "fast-burn page threshold (7.2%)", "refId": "D" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 5 }
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull"] }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Latency SLI — ratio slower than 300ms vs 1% budget",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "targets": [
+        { "expr": "slo:latency_error:ratio_rate5m{service=\"slo-demo\"}", "legendFormat": "5m window", "refId": "A" },
+        { "expr": "slo:latency_error:ratio_rate1h{service=\"slo-demo\"}", "legendFormat": "1h window", "refId": "B" },
+        { "expr": "vector(0.01)", "legendFormat": "error budget (1%)", "refId": "C" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 5 }
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull"] }
+      }
+    },
+    {
+      "id": 7,
+      "type": "row",
+      "title": "Traffic — context for reading the ratios above",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Request rate by status",
+      "description": "A ratio over low traffic is noise. This panel is here so nobody reads a 50% error ratio computed from 2 requests as an incident.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(http_requests_total{job=\"slo-demo\",path=\"/api\"}[1m]))",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20, "stacking": { "mode": "normal" } }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Latency distribution (p50 / p90 / p99)",
+      "description": "Percentiles are for debugging, NOT for the SLO. The SLO uses the 300ms bucket ratio — see slo/slo-definition.md.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"slo-demo\",path=\"/api\"}[5m])))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"slo-demo\",path=\"/api\"}[5m])))",
+          "legendFormat": "p90",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"slo-demo\",path=\"/api\"}[5m])))",
+          "legendFormat": "p99",
+          "refId": "C"
+        },
+        { "expr": "vector(0.3)", "legendFormat": "SLO threshold (300ms)", "refId": "D" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 0 }
+        }
+      }
+    }
+  ]
+}

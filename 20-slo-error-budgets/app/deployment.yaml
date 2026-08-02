@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slo-demo
+  namespace: slo-demo
+  labels:
+    app: slo-demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: slo-demo
+  template:
+    metadata:
+      labels:
+        app: slo-demo
+    spec:
+      containers:
+        - name: slo-demo
+          image: slo-demo:v1
+          # The image is side-loaded with `kind load docker-image`, so there is
+          # no registry to pull from. Without Never, kubelet would try to pull
+          # docker.io/library/slo-demo:v1 and land in ImagePullBackOff.
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 1
+            periodSeconds: 5

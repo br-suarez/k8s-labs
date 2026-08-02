@@ -1,0 +1,43 @@
+PHASE 3 — ALERT FIRING
+
+================ slo-demo SLO status @ 2026-08-02T03:28:50Z ================
+chaos state (deduplicated across replicas):
+  {"error_rate":0.35,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
+
+traffic:
+  request rate (req/s)                   584.92
+
+availability SLI (error ratio, budget = 0.5%):
+  5m  window                             24.0706%
+  30m window                             17.5961%
+  1h  window                             17.5961%
+
+latency SLI (ratio slower than 300ms, budget = 1%):
+  5m  window                             0.4863%
+  1h  window                             0.4913%
+
+burn rate (1 = budget spent exactly evenly over 28d):
+  availability 1h                        35.19x
+  availability 6h                        35.19x
+
+error budget remaining (6h lab proxy; 1.0 = untouched):
+  availability                           -34.19
+==============================================================================
+
+=== SLO alerts pending or firing @ 2026-08-02T03:28:51Z ===
+  [FIRING] SLODemoAvailabilityFastBurn
+      burn_rate=14.4x  windows=1h/5m  severity=critical
+      active since: 2026-08-02T03:26:28.448676698Z
+      value:        1.7596076298816213e-01
+  [PENDING] SLODemoAvailabilitySlowBurn
+      burn_rate=6x  windows=6h/30m  severity=critical
+      active since: 2026-08-02T03:25:43.448676698Z
+      value:        1.7596076298816213e-01
+  [PENDING] SLODemoAvailabilityBudgetDrain
+      burn_rate=3x  windows=1d/2h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.7596076298816213e-01
+  [PENDING] SLODemoAvailabilityChronicBurn
+      burn_rate=1x  windows=3d/6h  severity=warning
+      active since: 2026-08-02T03:25:13.448676698Z
+      value:        1.7596076298816216e-01

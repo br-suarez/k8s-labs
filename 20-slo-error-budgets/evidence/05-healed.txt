@@ -1,0 +1,5 @@
+PHASE 4 — HEALED (error_rate back to 0.001)
+
+==> POST /chaos?error_rate=0.001&slow_rate=0.005   (x30 writes to cover all replicas)
+==> resulting state, deduplicated across replicas:
+  {"error_rate":0.001,"slow_max_ms":700,"slow_min_ms":320,"slow_rate":0.005}
