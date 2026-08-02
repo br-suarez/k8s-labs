@@ -1,0 +1,674 @@
+======================================================================
+ TERRAFORM — module, import, drift
+ date: 2026-08-02T06:06:33Z
+======================================================================
+
+========== init / validate / fmt ==========
+
+$ terraform init -no-color
+Initializing the backend...
+
+Initializing modules...
+- checkout in modules/k8s-app
+
+Initializing provider plugins...
+- Finding hashicorp/kubernetes versions matching "~> 2.35"...
+- Installing hashicorp/kubernetes v2.38.0...
+- Installed hashicorp/kubernetes v2.38.0 (signed by HashiCorp)
+
+Terraform has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+
+$ terraform validate -no-color
+Success! The configuration is valid.
+
+
+$ terraform fmt -check -recursive -no-color
+
+========== APPLY 1 — everything except the resource to be imported ==========
+
+kubernetes_config_map_v1.legacy_settings is written in main.tf but the object
+does not exist yet, so it is excluded from this apply with -target. Using
+-target here is legitimate: the point is to reach a state where that ONE
+resource is configured-but-not-in-state, which is the situation import solves.
+
+$ terraform apply -auto-approve -no-color -target=kubernetes_namespace_v1.lab -target=module.checkout
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # kubernetes_namespace_v1.lab will be created
+  + resource "kubernetes_namespace_v1" "lab" {
+      + id                               = (known after apply)
+      + wait_for_default_service_account = false
+
+      + metadata {
+          + generation       = (known after apply)
+          + labels           = {
+              + "app.kubernetes.io/managed-by" = "terraform"
+            }
+          + name             = "tf-lab"
+          + resource_version = (known after apply)
+          + uid              = (known after apply)
+        }
+    }
+
+  # module.checkout.kubernetes_config_map_v1.this will be created
+  + resource "kubernetes_config_map_v1" "this" {
+      + data = {
+          + "feature_flags" = "checkout_v2=off"
+          + "greeting"      = "hello from terraform"
+        }
+      + id   = (known after apply)
+
+      + metadata {
+          + generation       = (known after apply)
+          + labels           = {
+              + "app.kubernetes.io/managed-by" = "terraform"
+              + "app.kubernetes.io/name"       = "checkout"
+            }
+          + name             = "checkout"
+          + namespace        = "tf-lab"
+          + resource_version = (known after apply)
+          + uid              = (known after apply)
+        }
+    }
+
+  # module.checkout.kubernetes_deployment_v1.this will be created
+  + resource "kubernetes_deployment_v1" "this" {
+      + id               = (known after apply)
+      + wait_for_rollout = true
+
+      + metadata {
+          + generation       = (known after apply)
+          + labels           = {
+              + "app.kubernetes.io/managed-by" = "terraform"
+              + "app.kubernetes.io/name"       = "checkout"
+            }
+          + name             = "checkout"
+          + namespace        = "tf-lab"
+          + resource_version = (known after apply)
+          + uid              = (known after apply)
+        }
+
+      + spec {
+          + min_ready_seconds         = 0
+          + paused                    = false
+          + progress_deadline_seconds = 600
+          + replicas                  = "2"
+          + revision_history_limit    = 10
+
+          + selector {
+              + match_labels = {
+                  + "app.kubernetes.io/name" = "checkout"
+                }
+            }
+
+          + strategy (known after apply)
+
+          + template {
+              + metadata {
+                  + annotations      = {
+                      + "checksum/config" = "d4583930aaaeaea7daa8fa98b54c646debf8997e11963aa2d3d72d2d1c1f39a1"
+                    }
+                  + generation       = (known after apply)
+                  + labels           = {
+                      + "app.kubernetes.io/managed-by" = "terraform"
+                      + "app.kubernetes.io/name"       = "checkout"
+                    }
+                  + name             = (known after apply)
+                  + resource_version = (known after apply)
+                  + uid              = (known after apply)
+                }
+              + spec {
+                  + automount_service_account_token  = true
+                  + dns_policy                       = "ClusterFirst"
+                  + enable_service_links             = true
+                  + host_ipc                         = false
+                  + host_network                     = false
+                  + host_pid                         = false
+                  + hostname                         = (known after apply)
+                  + node_name                        = (known after apply)
+                  + restart_policy                   = "Always"
+                  + scheduler_name                   = (known after apply)
+                  + service_account_name             = (known after apply)
+                  + share_process_namespace          = false
+                  + termination_grace_period_seconds = 30
+
+                  + container {
+                      + image                      = "slo-demo:v1"
+                      + image_pull_policy          = "Never"
+                      + name                       = "checkout"
+                      + stdin                      = false
+                      + stdin_once                 = false
+                      + termination_message_path   = "/dev/termination-log"
+                      + termination_message_policy = (known after apply)
+                      + tty                        = false
+
+                      + env {
+                          + name  = "APP_VERSION"
+                          + value = "v1"
+                        }
+
+                      + port {
+                          + container_port = 8080
+                          + name           = "http"
+                          + protocol       = "TCP"
+                        }
+
+                      + readiness_probe {
+                          + failure_threshold     = 3
+                          + initial_delay_seconds = 1
+                          + period_seconds        = 5
+                          + success_threshold     = 1
+                          + timeout_seconds       = 1
+
+                          + http_get {
+                              + path   = "/healthz"
+                              + port   = "http"
+                              + scheme = "HTTP"
+                            }
+                        }
+
+                      + resources {
+                          + limits   = {
+                              + "memory" = "64Mi"
+                            }
+                          + requests = {
+                              + "cpu"    = "50m"
+                              + "memory" = "32Mi"
+                            }
+                        }
+                    }
+
+                  + image_pull_secrets (known after apply)
+
+                  + readiness_gate (known after apply)
+                }
+            }
+        }
+    }
+
+  # module.checkout.kubernetes_service_v1.this will be created
+  + resource "kubernetes_service_v1" "this" {
+      + id                     = (known after apply)
+      + status                 = (known after apply)
+      + wait_for_load_balancer = true
+
+      + metadata {
+          + generation       = (known after apply)
+          + labels           = {
+              + "app.kubernetes.io/managed-by" = "terraform"
+              + "app.kubernetes.io/name"       = "checkout"
+            }
+          + name             = "checkout"
+          + namespace        = "tf-lab"
+          + resource_version = (known after apply)
+          + uid              = (known after apply)
+        }
+
+      + spec {
+          + allocate_load_balancer_node_ports = true
+          + cluster_ip                        = (known after apply)
+          + cluster_ips                       = (known after apply)
+          + external_traffic_policy           = (known after apply)
+          + health_check_node_port            = (known after apply)
+          + internal_traffic_policy           = (known after apply)
+          + ip_families                       = (known after apply)
+          + ip_family_policy                  = (known after apply)
+          + publish_not_ready_addresses       = false
+          + selector                          = {
+              + "app.kubernetes.io/name" = "checkout"
+            }
+          + session_affinity                  = "None"
+          + type                              = "ClusterIP"
+
+          + port {
+              + name        = "http"
+              + node_port   = (known after apply)
+              + port        = 8080
+              + protocol    = "TCP"
+              + target_port = "http"
+            }
+
+          + session_affinity_config (known after apply)
+        }
+    }
+
+Plan: 4 to add, 0 to change, 0 to destroy.
+kubernetes_namespace_v1.lab: Creating...
+kubernetes_namespace_v1.lab: Creation complete after 0s [id=tf-lab]
+module.checkout.kubernetes_service_v1.this: Creating...
+module.checkout.kubernetes_config_map_v1.this: Creating...
+module.checkout.kubernetes_config_map_v1.this: Creation complete after 0s [id=tf-lab/checkout]
+module.checkout.kubernetes_deployment_v1.this: Creating...
+module.checkout.kubernetes_service_v1.this: Creation complete after 0s [id=tf-lab/checkout]
+module.checkout.kubernetes_deployment_v1.this: Creation complete after 4s [id=tf-lab/checkout]
+
+Warning: Resource targeting is in effect
+
+You are creating a plan with the -target option, which means that the result
+of this plan may not represent all of the changes requested by the current
+configuration.
+
+The -target option is not for routine use, and is provided only for
+exceptional situations such as recovering from errors or mistakes, or when
+Terraform specifically suggests to use it as part of an error message.
+
+Warning: Applied changes may be incomplete
+
+The plan was created with the -target option in effect, so some changes
+requested in the configuration may have been ignored and the output values
+may not be fully updated. Run the following command to verify that no other
+changes are pending:
+    terraform plan
+
+Note that the -target option is not suitable for routine use, and is provided
+only for exceptional situations such as recovering from errors or mistakes,
+or when Terraform specifically suggests to use it as part of an error
+message.
+
+Apply complete! Resources: 4 added, 0 changed, 0 destroyed.
+
+$ kubectl get all,cm -n tf-lab
+NAME                            READY   STATUS    RESTARTS   AGE
+pod/checkout-5858ddc67c-2k988   1/1     Running   0          4s
+pod/checkout-5858ddc67c-wgnl7   1/1     Running   0          4s
+
+NAME               TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE
+service/checkout   ClusterIP   10.96.166.79   <none>        8080/TCP   4s
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/checkout   2/2     2            2           4s
+
+NAME                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps/checkout-5858ddc67c   2         2         2       4s
+
+NAME                         DATA   AGE
+configmap/checkout           2      4s
+configmap/kube-root-ca.crt   1      4s
+
+$ terraform output -no-color
+
+Warning: No outputs found
+
+The state file either has no outputs defined, or all the defined outputs are
+empty. Please define an output in your configuration with the `output`
+keyword and run `terraform refresh` for it to become available. If you are
+using interpolation, please verify the interpolated value is not empty. You
+can use the `terraform console` command to assist.
+
+========== IMPORT — an object created outside Terraform ==========
+
+Simulating the usual reality: something was created by hand, long ago, by
+somebody else. Terraform did not create it and does not know it exists.
+
+$ kubectl create configmap legacy-settings -n tf-lab --from-literal=owner=payments-team --from-literal=tier=internal --from-literal=log_level=info
+configmap/legacy-settings created
+
+Terraform's view: it wants to CREATE the object, which would fail because the
+object already exists.
+
+$ sh -c terraform plan -no-color | tail -25
+      + data = {
+          + "log_level" = "info"
+          + "owner"     = "payments-team"
+          + "tier"      = "internal"
+        }
+      + id   = (known after apply)
+
+      + metadata {
+          + generation       = (known after apply)
+          + labels           = {
+              + "app.kubernetes.io/managed-by" = "terraform"
+            }
+          + name             = "legacy-settings"
+          + namespace        = "tf-lab"
+          + resource_version = (known after apply)
+          + uid              = (known after apply)
+        }
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
+
+Import binds the live object to the configuration block:
+
+$ terraform import -no-color kubernetes_config_map_v1.legacy_settings tf-lab/legacy-settings
+kubernetes_config_map_v1.legacy_settings: Importing from ID "tf-lab/legacy-settings"...
+kubernetes_config_map_v1.legacy_settings: Import prepared!
+  Prepared kubernetes_config_map_v1 for import
+kubernetes_config_map_v1.legacy_settings: Refreshing state... [id=tf-lab/legacy-settings]
+
+Import successful!
+
+The resources that were imported are shown above. These resources are now in
+your Terraform state and will henceforth be managed by Terraform.
+
+
+Now the plan is clean — configuration and reality agree:
+
+$ sh -c terraform plan -no-color | tail -8
+    }
+
+Plan: 0 to add, 1 to change, 0 to destroy.
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
+
+$ sh -c terraform state list
+kubernetes_config_map_v1.legacy_settings
+kubernetes_namespace_v1.lab
+module.checkout.kubernetes_config_map_v1.this
+module.checkout.kubernetes_deployment_v1.this
+module.checkout.kubernetes_service_v1.this
+
+========== DRIFT 1 — someone scales the Deployment by hand ==========
+
+The classic 3am fix: scale up during an incident, forget to update the code.
+
+$ kubectl scale deployment checkout -n tf-lab --replicas=5
+deployment.apps/checkout scaled
+
+$ kubectl get deployment checkout -n tf-lab -o custom-columns=NAME:.metadata.name,DESIRED:.spec.replicas,READY:.status.readyReplicas
+NAME       DESIRED   READY
+checkout   5         5
+
+'terraform plan -refresh-only' shows drift WITHOUT proposing to change anything.
+This is the read-only way to answer 'what has changed underneath us?'
+
+$ sh -c terraform plan -refresh-only -no-color | sed -n '/changed outside of Terraform/,/This is a refresh-only plan/p' | head -75
+Note: Objects have changed outside of Terraform
+
+Terraform detected the following changes made outside of Terraform since the
+last "terraform apply" which may have affected this plan:
+
+  # kubernetes_namespace_v1.lab has changed
+  ~ resource "kubernetes_namespace_v1" "lab" {
+        id                               = "tf-lab"
+        # (1 unchanged attribute hidden)
+
+      ~ metadata {
+          + annotations      = {}
+            name             = "tf-lab"
+            # (5 unchanged attributes hidden)
+        }
+    }
+
+  # module.checkout.kubernetes_config_map_v1.this has changed
+  ~ resource "kubernetes_config_map_v1" "this" {
+      + binary_data = {}
+        id          = "tf-lab/checkout"
+        # (2 unchanged attributes hidden)
+
+      ~ metadata {
+          + annotations      = {}
+            name             = "checkout"
+            # (6 unchanged attributes hidden)
+        }
+    }
+
+  # module.checkout.kubernetes_deployment_v1.this has changed
+  ~ resource "kubernetes_deployment_v1" "this" {
+        id               = "tf-lab/checkout"
+        # (1 unchanged attribute hidden)
+
+      ~ metadata {
+          + annotations      = {}
+          ~ generation       = 1 -> 2
+            name             = "checkout"
+          ~ resource_version = "26123" -> "26239"
+            # (4 unchanged attributes hidden)
+        }
+
+      ~ spec {
+          ~ replicas                  = "2" -> "5"
+            # (4 unchanged attributes hidden)
+
+          ~ template {
+              ~ spec {
+                  + node_selector                    = {}
+                    # (17 unchanged attributes hidden)
+
+                  ~ container {
+                      + args                       = []
+                      + command                    = []
+                        name                       = "checkout"
+                        # (8 unchanged attributes hidden)
+
+                        # (4 unchanged blocks hidden)
+                    }
+                }
+
+                # (1 unchanged block hidden)
+            }
+
+            # (2 unchanged blocks hidden)
+        }
+    }
+
+  # module.checkout.kubernetes_service_v1.this has changed
+  ~ resource "kubernetes_service_v1" "this" {
+        id                     = "tf-lab/checkout"
+        # (2 unchanged attributes hidden)
+
+      ~ metadata {
+
+A normal plan proposes to correct it back to what the code says:
+
+$ sh -c terraform plan -no-color | tail -20
+  ~ resource "kubernetes_deployment_v1" "this" {
+        id               = "tf-lab/checkout"
+        # (1 unchanged attribute hidden)
+
+      ~ spec {
+          ~ replicas                  = "5" -> "2"
+            # (4 unchanged attributes hidden)
+
+            # (3 unchanged blocks hidden)
+        }
+
+        # (1 unchanged block hidden)
+    }
+
+Plan: 0 to add, 2 to change, 0 to destroy.
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
+
+Applying reconciles reality to the code — the manual scale is reverted:
+
+$ terraform apply -auto-approve -no-color
+kubernetes_namespace_v1.lab: Refreshing state... [id=tf-lab]
+kubernetes_config_map_v1.legacy_settings: Refreshing state... [id=tf-lab/legacy-settings]
+module.checkout.kubernetes_config_map_v1.this: Refreshing state... [id=tf-lab/checkout]
+module.checkout.kubernetes_service_v1.this: Refreshing state... [id=tf-lab/checkout]
+module.checkout.kubernetes_deployment_v1.this: Refreshing state... [id=tf-lab/checkout]
+
+Note: Objects have changed outside of Terraform
+
+Terraform detected the following changes made outside of Terraform since the
+last "terraform apply" which may have affected this plan:
+
+  # module.checkout.kubernetes_deployment_v1.this has changed
+  ~ resource "kubernetes_deployment_v1" "this" {
+        id               = "tf-lab/checkout"
+        # (1 unchanged attribute hidden)
+
+      ~ spec {
+          ~ replicas                  = "2" -> "5"
+            # (4 unchanged attributes hidden)
+
+            # (3 unchanged blocks hidden)
+        }
+
+        # (1 unchanged block hidden)
+    }
+
+
+Unless you have made equivalent changes to your configuration, or ignored the
+relevant attributes using ignore_changes, the following plan may include
+actions to undo or respond to these changes.
+
+─────────────────────────────────────────────────────────────────────────────
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+Terraform will perform the following actions:
+
+  # kubernetes_config_map_v1.legacy_settings will be updated in-place
+  ~ resource "kubernetes_config_map_v1" "legacy_settings" {
+        id          = "tf-lab/legacy-settings"
+        # (3 unchanged attributes hidden)
+
+      ~ metadata {
+          ~ labels           = {
+              + "app.kubernetes.io/managed-by" = "terraform"
+            }
+            name             = "legacy-settings"
+            # (6 unchanged attributes hidden)
+        }
+    }
+
+  # module.checkout.kubernetes_deployment_v1.this will be updated in-place
+  ~ resource "kubernetes_deployment_v1" "this" {
+        id               = "tf-lab/checkout"
+        # (1 unchanged attribute hidden)
+
+      ~ spec {
+          ~ replicas                  = "5" -> "2"
+            # (4 unchanged attributes hidden)
+
+            # (3 unchanged blocks hidden)
+        }
+
+        # (1 unchanged block hidden)
+    }
+
+Plan: 0 to add, 2 to change, 0 to destroy.
+kubernetes_config_map_v1.legacy_settings: Modifying... [id=tf-lab/legacy-settings]
+module.checkout.kubernetes_deployment_v1.this: Modifying... [id=tf-lab/checkout]
+kubernetes_config_map_v1.legacy_settings: Modifications complete after 0s [id=tf-lab/legacy-settings]
+module.checkout.kubernetes_deployment_v1.this: Modifications complete after 1s [id=tf-lab/checkout]
+
+Apply complete! Resources: 0 added, 2 changed, 0 destroyed.
+
+$ kubectl get deployment checkout -n tf-lab -o custom-columns=NAME:.metadata.name,DESIRED:.spec.replicas,READY:.status.readyReplicas
+NAME       DESIRED   READY
+checkout   2         2
+
+========== DRIFT 2 — someone edits a ConfigMap Terraform owns ==========
+
+$ kubectl patch configmap legacy-settings -n tf-lab --type merge -p {"data":{"log_level":"debug","added_by_hand":"true"}}
+configmap/legacy-settings patched
+
+$ kubectl get cm legacy-settings -n tf-lab -o jsonpath={.data}{"\n"}
+{"added_by_hand":"true","log_level":"debug","owner":"payments-team","tier":"internal"}
+
+Drift detected on two keys — one changed, one added:
+
+$ sh -c terraform plan -refresh-only -no-color | sed -n '/changed outside of Terraform/,/This is a refresh-only plan/p' | head -75
+Note: Objects have changed outside of Terraform
+
+Terraform detected the following changes made outside of Terraform since the
+last "terraform apply" which may have affected this plan:
+
+  # kubernetes_config_map_v1.legacy_settings has changed
+  ~ resource "kubernetes_config_map_v1" "legacy_settings" {
+      ~ data        = {
+          + "added_by_hand" = "true"
+          ~ "log_level"     = "info" -> "debug"
+            # (2 unchanged elements hidden)
+        }
+        id          = "tf-lab/legacy-settings"
+        # (2 unchanged attributes hidden)
+
+      ~ metadata {
+            name             = "legacy-settings"
+          ~ resource_version = "26310" -> "26349"
+            # (6 unchanged attributes hidden)
+        }
+    }
+
+
+This is a refresh-only plan, so Terraform will not take any actions to undo
+
+Here the choice matters. Two valid, opposite responses:
+
+  terraform apply              -> code wins. Revert the manual change.
+  terraform apply -refresh-only -> reality wins. Accept it into state,
+                                   leaving the CODE now out of date.
+
+The second is the trap: it makes the plan clean without making the
+configuration correct. Choosing it means committing to update the code next.
+This run takes the first option.
+
+$ terraform apply -auto-approve -no-color
+kubernetes_namespace_v1.lab: Refreshing state... [id=tf-lab]
+kubernetes_config_map_v1.legacy_settings: Refreshing state... [id=tf-lab/legacy-settings]
+module.checkout.kubernetes_config_map_v1.this: Refreshing state... [id=tf-lab/checkout]
+module.checkout.kubernetes_service_v1.this: Refreshing state... [id=tf-lab/checkout]
+module.checkout.kubernetes_deployment_v1.this: Refreshing state... [id=tf-lab/checkout]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+Terraform will perform the following actions:
+
+  # kubernetes_config_map_v1.legacy_settings will be updated in-place
+  ~ resource "kubernetes_config_map_v1" "legacy_settings" {
+      ~ data        = {
+          - "added_by_hand" = "true" -> null
+          ~ "log_level"     = "debug" -> "info"
+            # (2 unchanged elements hidden)
+        }
+        id          = "tf-lab/legacy-settings"
+        # (2 unchanged attributes hidden)
+
+        # (1 unchanged block hidden)
+    }
+
+Plan: 0 to add, 1 to change, 0 to destroy.
+kubernetes_config_map_v1.legacy_settings: Modifying... [id=tf-lab/legacy-settings]
+kubernetes_config_map_v1.legacy_settings: Modifications complete after 0s [id=tf-lab/legacy-settings]
+
+Apply complete! Resources: 0 added, 1 changed, 0 destroyed.
+
+$ kubectl get cm legacy-settings -n tf-lab -o jsonpath={.data}{"\n"}
+{"log_level":"info","owner":"payments-team","tier":"internal"}
+
+Final plan — no changes:
+
+$ sh -c terraform plan -no-color | tail -6
+module.checkout.kubernetes_deployment_v1.this: Refreshing state... [id=tf-lab/checkout]
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
