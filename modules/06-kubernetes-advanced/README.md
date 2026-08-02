@@ -28,13 +28,13 @@ with no content behind it. This module is that content, built from scratch.
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso (módulos 04–05) | CORE | 15 min |
-| 01 | Postgres as a StatefulSet: stable identity, ordered startup, volumeClaimTemplates | CORE | 55 min |
-| 02 | NFS server in-cluster; shared `ReadWriteMany` volume for probe artifacts | CORE | 50 min |
-| 03 | **Backup and restore drill** — destroy the database, restore it, measure RPO/RTO | CORE | 55 min |
-| 04 | PDBs and anti-affinity: drain a node with Pulse running and keep serving | CORE | 45 min |
-| 05 | HA control plane (`ha` profile): kill one etcd member and survive; kill two and understand why you did not | EXTEND | 50 min |
-| 06 | The pod that will not die: NFS hang, finalizers, and `--force` (and why `--force` is usually wrong) | EXTEND | 40 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 04–05) | CORE | 15 min |
+| 01 | [Postgres as a StatefulSet](./labs/01-statefulset.md) — and the failure that motivates it | CORE | 55 min |
+| 02 | [Shared storage with NFS](./labs/02-nfs.md) — including how it hangs | CORE | 50 min |
+| 03 | [**The restore drill**](./labs/03-restore-drill.md) — destroy the database, bring it back, measure RPO/RTO | CORE | 55 min |
+| 04 | [Survive a node drain](./labs/04-pdb-drain.md) — PDBs and anti-affinity | CORE | 45 min |
+| 05 | [Quorum, and why it is odd numbers](./labs/05-ha-etcd.md) | EXTEND | 50 min |
+| 06 | [The pod that will not die](./labs/06-stuck-terminating.md) — four causes, one symptom | EXTEND | 40 min |
 
 > Lab 05 uses the `ha` cluster profile (~6 GiB). Tear it down immediately after.
 > If your host cannot afford it, read the lab, write down what you expect, and

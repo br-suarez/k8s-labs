@@ -38,14 +38,14 @@ they mute.
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso (módulos 05–06) | CORE | 15 min |
-| 01 | Install kube-prometheus-stack tuned for a small cluster; document every value you reduced and its cost | CORE | 45 min |
-| 02 | Replace the hand-rolled exporter with the Prometheus client; diff the output and explain the differences | CORE | 45 min |
-| 03 | Define the Pulse SLI and SLO — the "whose failure is it" problem above | CORE | 50 min |
-| 04 | **Recording rules**: build a deliberately slow dashboard, measure it, fix it, measure again | CORE | 50 min |
-| 05 | Multi-window burn-rate alerting; inject failure and watch it fire | CORE | 45 min |
-| 06 | Cardinality: add a label that explodes the series count, watch memory, then fix it | EXTEND | 40 min |
-| 07 | The missing metric: four-layer diagnostic path | EXTEND | 35 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 05–06) | CORE | 15 min |
+| 01 | [The stack, on a small cluster](./labs/01-install-stack.md) — every value you reduce, and what it costs | CORE | 45 min |
+| 02 | [Replace the hand-rolled exporter](./labs/02-instrument.md) — diff your own work against the official client | CORE | 45 min |
+| 03 | [**Whose failure is it?**](./labs/03-sli-slo.md) — the conceptual centre of the module | CORE | 50 min |
+| 04 | [Make a slow dashboard fast](./labs/04-recording-rules.md) — measured, both directions | CORE | 50 min |
+| 05 | [Multi-window burn rate](./labs/05-burn-rate.md) — and proving it does *not* fire | CORE | 45 min |
+| 06 | [Blow it up on purpose](./labs/06-cardinality.md) — cardinality, and the three defences | EXTEND | 40 min |
+| 07 | [The metric that disappeared](./labs/07-missing-metric.md) | EXTEND | 35 min |
 
 ## Low-memory note
 

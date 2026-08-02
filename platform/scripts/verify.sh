@@ -154,9 +154,91 @@ group_gateway() {
     [ -z \"\$bad\" ] || { echo \"\$bad\"; exit 1; }"
 }
 
+# --- group: storage -----------------------------------------------------------
+# Added in module 06. A backup nobody has restored is a hypothesis, so this
+# checks the drill ran recently rather than that files exist.
+group_storage() {
+  log "${DIM}== storage ==${RESET}"
+  if ! have kubectl || ! kubectl cluster-info >/dev/null 2>&1; then
+    skip "state is durable" "no reachable cluster"
+    return
+  fi
+  local ns=${PULSE_NAMESPACE:-pulse}
+
+  check "every PVC is Bound" bash -c "
+    bad=\$(kubectl get pvc -n '$ns' -o jsonpath='{range .items[*]}{.metadata.name}={.status.phase}{\"\n\"}{end}' \
+      | grep -v '=Bound\$' || true)
+    [ -z \"\$bad\" ] || { echo \"\$bad\"; exit 1; }"
+
+  check "postgres statefulset is ready" \
+    kubectl rollout status statefulset/postgres -n "$ns" --timeout=30s
+
+  # The check that matters: not "do backups exist" but "did a restore work".
+  check "a restore was verified in the last 48h" bash -c "
+    ts=\$(kubectl get configmap pulse-backup-state -n '$ns' \
+      -o jsonpath='{.data.last_verified_epoch}' 2>/dev/null || echo 0)
+    now=\$(date +%s)
+    age=\$(( (now - \${ts:-0}) / 3600 ))
+    [ \"\${ts:-0}\" -gt 0 ] || { echo 'no restore has ever been verified'; exit 1; }
+    [ \"\$age\" -lt 48 ] || { echo \"last verified restore was \${age}h ago\"; exit 1; }"
+}
+
+# --- group: slo ---------------------------------------------------------------
+# Added in module 07.
+group_slo() {
+  log "${DIM}== slo ==${RESET}"
+  local prom=${PROMETHEUS_URL:-http://localhost:9090}
+  if ! have curl || ! curl -fsS -o /dev/null --max-time 3 "$prom/-/ready" 2>/dev/null; then
+    skip "SLO rules are loaded" "Prometheus not reachable at $prom"
+    return
+  fi
+
+  check "pulse targets are up" bash -c "
+    down=\$(curl -fsS '$prom/api/v1/query?query=up%7Bjob%3D~%22pulse.%2A%22%7D%3D%3D0' \
+      | grep -o '\"metric\"' | wc -l)
+    [ \"\$down\" -eq 0 ] || { echo \"\$down pulse target(s) down\"; exit 1; }"
+
+  check "recording rules are evaluating" bash -c "
+    curl -fsS '$prom/api/v1/query?query=pulse%3Ahttp_request_duration_seconds%3Arate5m' \
+      | grep -q '\"result\":\[{'"
+
+  # Guards against this module's break-fix.
+  check "series count is under 500k" bash -c "
+    n=\$(curl -fsS '$prom/api/v1/query?query=prometheus_tsdb_head_series' \
+      | sed -n 's/.*\"value\":\[[0-9.]*,\"\([0-9]*\)\".*/\1/p')
+    [ -n \"\$n\" ] || { echo 'could not read head series'; exit 1; }
+    [ \"\$n\" -lt 500000 ] || { echo \"head series: \$n\"; exit 1; }"
+}
+
+# --- group: traces ------------------------------------------------------------
+# Added in module 08.
+group_traces() {
+  log "${DIM}== traces ==${RESET}"
+  local col=${OTELCOL_METRICS_URL:-http://localhost:8888}
+  if ! have curl || ! curl -fsS -o /dev/null --max-time 3 "$col/metrics" 2>/dev/null; then
+    skip "telemetry is flowing" "Collector metrics not reachable at $col"
+    return
+  fi
+
+  check "collector is accepting spans" bash -c "
+    curl -fsS '$col/metrics' | grep -q '^otelcol_receiver_accepted_spans'"
+
+  # accepted minus sent, over time, is data you lost.
+  check "collector is not refusing spans" bash -c "
+    n=\$(curl -fsS '$col/metrics' | awk '/^otelcol_processor_refused_spans/ {s+=\$2} END {print s+0}')
+    [ \"\$n\" -eq 0 ] || { echo \"refused spans: \$n — there is a hole in your data\"; exit 1; }"
+
+  check "export queue has headroom" bash -c "
+    size=\$(curl -fsS '$col/metrics' | awk '/^otelcol_exporter_queue_size/ {s+=\$2} END {print s+0}')
+    cap=\$(curl -fsS '$col/metrics' | awk '/^otelcol_exporter_queue_capacity/ {s+=\$2} END {print s+0}')
+    [ \"\$cap\" -gt 0 ] || { echo 'no queue capacity reported'; exit 1; }
+    pct=\$(( size * 100 / cap ))
+    [ \"\$pct\" -lt 80 ] || { echo \"queue at \${pct}%\"; exit 1; }"
+}
+
 # --- registry -----------------------------------------------------------------
 # Order matters: cheap checks first so failures surface fast.
-ALL_GROUPS=(tooling build scripts nginx gateway k8s)
+ALL_GROUPS=(tooling build scripts nginx gateway k8s storage slo traces)
 
 usage() {
   log "usage: $0 [group...]"

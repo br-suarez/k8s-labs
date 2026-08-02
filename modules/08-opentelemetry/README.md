@@ -36,15 +36,15 @@ tutorials skip because their example app is a single service.
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso (módulos 06–07) | CORE | 15 min |
-| 01 | OTel concepts against the spec: signals, context, baggage, resource | CORE | 40 min |
-| 02 | Instrument `pulse-api` by hand: tracer, spans, attributes, errors | CORE | 55 min |
-| 03 | Deploy the Collector (v0.157.0); build a pipeline with a processor that does real work | CORE | 50 min |
-| 04 | **Propagate across the queue** — the lab that matters | CORE | 60 min |
-| 05 | Traces to Tempo, metrics to Prometheus, correlate with exemplars | CORE | 50 min |
-| 06 | Head vs tail sampling: keep every error trace at 1% overall sampling | CORE | 45 min |
-| 07 | Span metrics: derive RED from traces, compare against module 07's direct metrics, explain the disagreement | EXTEND | 45 min |
-| 08 | Semantic conventions and why they matter for portability | EXTEND | 30 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 06–07) | CORE | 15 min |
+| 01 | [Against the specification](./labs/01-concepts.md) — active reading, with a deliverable | CORE | 40 min |
+| 02 | [Instrument by hand](./labs/02-instrument-api.md) — and measure what a span costs | CORE | 55 min |
+| 03 | [The Collector pipeline](./labs/03-collector.md) — enrichment, redaction, and its own metrics | CORE | 50 min |
+| 04 | [**Across the queue**](./labs/04-queue-propagation.md) — the lab this module exists for | CORE | 60 min |
+| 05 | [Metric to trace, in one click](./labs/05-exemplars.md) — Tempo v3.0.2 and exemplars | CORE | 50 min |
+| 06 | [Keep every error at 1% sampling](./labs/06-sampling.md) — head vs tail | CORE | 45 min |
+| 07 | [When two sources of truth disagree](./labs/07-span-metrics.md) | EXTEND | 45 min |
+| 08 | [Semantic conventions](./labs/08-semantic-conventions.md) | EXTEND | 30 min |
 
 ## Capstone layer
 
