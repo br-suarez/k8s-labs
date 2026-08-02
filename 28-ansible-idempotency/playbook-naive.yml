@@ -1,0 +1,38 @@
+---
+# The version that "works" — and is not idempotent.
+#
+# Every task here produces the correct result on a clean host. The problem only
+# appears on the SECOND run, which is exactly when nobody is watching, because
+# the first run is the one that gets tested.
+- name: Configure web servers (naive, non-idempotent)
+  hosts: webservers
+  gather_facts: true
+
+  tasks:
+    - name: Install nginx
+      ansible.builtin.shell: apt-get update && apt-get install -y nginx
+      # No `creates`, no `changed_when`. This re-runs apt-get update on every
+      # play, takes seconds every time, and reports `changed` forever — so
+      # "did my change do anything?" becomes unanswerable.
+
+    - name: Add the application user
+      ansible.builtin.shell: useradd -m -s /bin/bash appuser
+      # Fails outright on the second run: "user 'appuser' already exists",
+      # exit 9. The playbook aborts partway through, leaving the host
+      # half-configured.
+      ignore_errors: true
+
+    - name: Register this deploy in the motd
+      ansible.builtin.shell: echo "deployed by ansible" >> /etc/motd
+      # Appends unconditionally. Run it ten times, get ten lines. This is the
+      # classic shape of non-idempotent configuration management: the file
+      # silently grows every run and nothing ever reports a problem.
+
+    - name: Write the app config
+      ansible.builtin.shell: |
+        cat > /etc/app.conf <<'EOF'
+        listen_port=8080
+        log_level=info
+        EOF
+      # Always rewrites the file, so it always reports `changed`, so a real
+      # config change is indistinguishable from no change at all.
