@@ -7,6 +7,24 @@
 # interval is however long it takes a human to wake up and start typing.
 set -uo pipefail
 
+# --- preflight -------------------------------------------------------------
+# Fail before touching anything if there is no reachable cluster.
+#
+# Without this, the script runs to completion against a dead API server: every
+# kubectl call returns "connection refused", and those errors get written into
+# evidence/, OVERWRITING the captured run with garbage. That is not
+# hypothetical — it happened once, and the committed evidence had to be
+# restored from git.
+if ! kubectl cluster-info >/dev/null 2>&1; then
+  echo "ERROR: no reachable Kubernetes cluster (kubectl cluster-info failed)." >&2
+  echo "       Create it first, from 20-slo-error-budgets/:" >&2
+  echo "         kind create cluster --config cluster/kind-config.yaml" >&2
+  echo "       Nothing was written." >&2
+  exit 1
+fi
+# ---------------------------------------------------------------------------
+
+
 cd "$(dirname "$0")/.."
 OUT=./evidence
 SLO_MODULE=../20-slo-error-budgets
