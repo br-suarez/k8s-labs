@@ -270,9 +270,46 @@ group_profiling() {
   fi
 }
 
+# --- group: gitops ------------------------------------------------------------
+# Added in module 10. Checks that the cluster is genuinely a consequence of the
+# repository, not that Argo merely reports success.
+group_gitops() {
+  log "${DIM}== gitops ==${RESET}"
+  if ! have kubectl || ! kubectl get crd applications.argoproj.io >/dev/null 2>&1; then
+    skip "cluster follows git" "Argo CD not installed"
+    return
+  fi
+
+  check "every Application is Synced" bash -c "
+    bad=\$(kubectl get applications -n argocd \
+      -o jsonpath='{range .items[*]}{.metadata.name}={.status.sync.status}{\"\n\"}{end}' \
+      | grep -v '=Synced\$' || true)
+    [ -z \"\$bad\" ] || { echo \"\$bad\"; exit 1; }"
+
+  check "every Application is Healthy" bash -c "
+    bad=\$(kubectl get applications -n argocd \
+      -o jsonpath='{range .items[*]}{.metadata.name}={.status.health.status}{\"\n\"}{end}' \
+      | grep -v '=Healthy\$' || true)
+    [ -z \"\$bad\" ] || { echo \"\$bad\"; exit 1; }"
+
+  # Self-heal disabled is correct during an incident and drift waiting to happen
+  # a week later. This is what stops "temporarily" becoming permanent.
+  check "no Application has self-heal left disabled" bash -c "
+    bad=\$(kubectl get applications -n argocd -o json \
+      | jq -r '.items[] | select(.spec.syncPolicy.automated.selfHeal != true) | .metadata.name')
+    [ -z \"\$bad\" ] || { echo \"self-heal off: \$bad\"; exit 1; }"
+
+  # ignoreDifferences hides a difference without preventing selfHeal from
+  # reverting it — a green panel over an active revert. Flag any use.
+  check "no unexplained ignoreDifferences" bash -c "
+    n=\$(kubectl get applications -n argocd -o json \
+      | jq '[.items[] | select(.spec.ignoreDifferences != null)] | length')
+    [ \"\$n\" -eq 0 ] || { echo \"\$n Application(s) use ignoreDifferences — each needs a documented owner\"; exit 1; }"
+}
+
 # --- registry -----------------------------------------------------------------
 # Order matters: cheap checks first so failures surface fast.
-ALL_GROUPS=(tooling build scripts nginx gateway k8s storage slo traces profiling)
+ALL_GROUPS=(tooling build scripts nginx gateway k8s storage slo traces profiling gitops)
 
 usage() {
   log "usage: $0 [group...]"

@@ -32,15 +32,15 @@ what separates operating GitOps from installing it.
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso (módulos 08–09) | CORE | 15 min |
-| 01 | Bootstrap Argo CD; understand what it did to the cluster | CORE | 40 min |
-| 02 | Kustomize base and overlays for dev/prod; no duplicated YAML | CORE | 50 min |
-| 03 | App-of-apps for the whole Pulse platform | CORE | 50 min |
-| 04 | Sync waves and hooks: force a correct ordering that fails without them | CORE | 45 min |
-| 05 | **Permanent drift**: an app that never reaches Synced because something mutates it | CORE | 45 min |
-| 06 | Self-heal vs the 3am patch — write the emergency procedure | CORE | 40 min |
-| 07 | Image updater or CI-writes-back: pick one and justify it | EXTEND | 40 min |
-| 08 | Argo CD RBAC and multi-tenancy | EXTEND | 35 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 07–09) | CORE | 15 min |
+| 01 | [Bootstrap, and what it did to your cluster](./labs/01-bootstrap.md) | CORE | 40 min |
+| 02 | [Base and overlays, no duplicated YAML](./labs/02-kustomize.md) | CORE | 50 min |
+| 03 | [App of apps](./labs/03-app-of-apps.md) — and its blast radius | CORE | 50 min |
+| 04 | [Ordering, and when you actually need it](./labs/04-sync-waves.md) | CORE | 45 min |
+| 05 | [**Permanent drift**](./labs/05-drift.md) — four causes, four different fixes | CORE | 45 min |
+| 06 | [The 3am procedure](./labs/06-emergency.md) | CORE | 40 min |
+| 07 | [Who writes the new digest?](./labs/07-image-updates.md) | EXTEND | 40 min |
+| 08 | [AppProjects and multi-tenancy](./labs/08-rbac.md) | EXTEND | 35 min |
 
 ## Capstone layer
 

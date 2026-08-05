@@ -26,14 +26,14 @@
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso (módulos 07–08) | CORE | 15 min |
-| 01 | Build, test, vet on push; matrix across two Go versions | CORE | 40 min |
-| 02 | Layer and module caching; measure before and after; find the case where the cache serves stale results | CORE | 45 min |
-| 03 | Publish by digest to GHCR, never by mutable tag | CORE | 40 min |
-| 04 | Trivy scan + SBOM generation as artifacts; fail on HIGH, with a documented exception path | CORE | 45 min |
-| 05 | **The deploy gate**: reject a release that reports `READY=true, RESTARTS=0` while failing 19% of requests | CORE | 50 min |
-| 06 | OIDC to GCP — no static keys anywhere in the repo | EXTEND | 45 min |
-| 07 | Reusable workflows and the security boundary they cross | EXTEND | 35 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 08b–08c) | CORE | 15 min |
+| 01 | [Build, test, vet](./labs/01-first-pipeline.md) — and drive it from `gh` | CORE | 40 min |
+| 02 | [Caching, and where it lies](./labs/02-caching.md) | CORE | 45 min |
+| 03 | [**The chain of custody**](./labs/03-digest-chain.md) — the digest travels between jobs | CORE | 40 min |
+| 04 | [Scan, SBOM, and the exception path](./labs/04-scan-sbom.md) | CORE | 45 min |
+| 05 | [The gate that catches a green liar](./labs/05-deploy-gate.md) | CORE | 50 min |
+| 06 | [No static keys anywhere](./labs/06-oidc.md) — OIDC to GCP | EXTEND | 45 min |
+| 07 | [Reusable workflows and the trust boundary](./labs/07-reusable.md) | EXTEND | 35 min |
 
 ## Capstone layer
 

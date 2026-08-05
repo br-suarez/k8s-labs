@@ -37,13 +37,13 @@ derive the timing error.
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso (módulos 09–10) | CORE | 15 min |
-| 01 | Argo Rollouts (v1.9.1) with a weighted canary via Gateway API from module 05 | CORE | 45 min |
-| 02 | AnalysisTemplate driven by the module 07 SLO | CORE | 50 min |
-| 03 | **Reject a bad release**; measure requests affected before rollback | CORE | 50 min |
-| 04 | Derive the minimum safe pause from the metric window; prove it | CORE | 45 min |
-| 05 | Canary vs blue/green vs rolling — implement blue/green too, compare cost and risk | EXTEND | 45 min |
-| 06 | The canary that promotes a broken release: three root causes, diagnose which | EXTEND | 40 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 10, 05, 07) | CORE | 15 min |
+| 01 | [From Deployment to Rollout](./labs/01-rollout.md) — weighted by Gateway API, not replicas | CORE | 45 min |
+| 02 | [Analysis driven by the SLO](./labs/02-analysis.md) — scoped to the canary | CORE | 50 min |
+| 03 | [**Measure the blast radius**](./labs/03-reject.md) — in requests, not percentages | CORE | 50 min |
+| 04 | [Derive the minimum safe pause](./labs/04-timing.md) | CORE | 45 min |
+| 05 | [Blue/green, and when canary is wrong](./labs/05-bluegreen.md) | EXTEND | 45 min |
+| 06 | [Three ways to promote a broken release](./labs/06-false-promote.md) | EXTEND | 40 min |
 
 ## Capstone layer
 
