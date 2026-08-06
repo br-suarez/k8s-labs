@@ -1,8 +1,8 @@
 # PLAN — Calendario semana por semana
 
-**Inicio:** lunes 2026-08-03
-**Objetivo:** 2027-02-14
-**Ritmo:** 3 bloques de 120 min por semana (lunes, martes, miércoles) = 6 h/semana
+**Inicio:** jueves 2026-08-06  (primera sesión)
+**Objetivo:** miércoles 2027-02-17
+**Ritmo:** 3 bloques de 120 min — **martes, miércoles y jueves, 19:00–21:00** = 6 h/semana
 
 ---
 
@@ -13,8 +13,8 @@ cada módulo decide en cuál estás.
 
 | Ruta | Bloques | Semanas | Fin |
 |---|---|---|---|
-| **A — con diagnósticos aprobados** (la esperada para ti) | 72 | 24 contenido + 4 reserva = 28 | **2027-02-14** |
-| **B — módulo completo, sin saltar nada** (principiante) | 96 | 28 contenido + 4 reserva = 32 | 2027-03-14 |
+| **A — con diagnósticos aprobados** (la esperada para ti) | 72 | 25 contenido + 4 reserva = 29 | **2027-02-17** |
+| **B — módulo completo, sin saltar nada** (principiante) | 96 | 29 contenido + 4 reserva = 33 | 2027-03-24 |
 
 La ruta A asume que apruebas el diagnóstico de los módulos 01, 03, 04, 11 y 13 —
 razonable dado el trabajo de `archive/sre-track/`. **Si no lo apruebas, no pasa
@@ -74,7 +74,7 @@ Esto **no** permite saltarse un módulo — la etiqueta solo existe si lo cerras
 bien. Lo único que hace es impedir que un problema de entorno se convierta en un
 problema de currículo.
 
-No optimices para llegar el 14 de febrero. Optimiza para que los criterios de
+No optimices para llegar el 17 de febrero. Optimiza para que los criterios de
 salida se cumplan de verdad. La fecha es maleable; el criterio no.
 
 ---
@@ -85,44 +85,50 @@ Leyenda de bloques: `05×3` = tres bloques del módulo 05 esa semana.
 
 | Sem | Lunes | Bloques | Hito |
 |---|---|---|---|
-| 1 | 2026-08-03 | `00×2` `01×1` | Entorno reproducible, `verify-setup.sh` pasa |
-| 2 | 2026-08-10 | `01×1` `02×2` | Harness `verify.sh` terminado |
-| 3 | 2026-08-17 | `02×2` `03×1` | **Pulse tras NGINX con TLS** |
-| 4 | 2026-08-24 | `03×1` `04×2` | **Pulse en Compose, imágenes distroless** |
-| 5 | 2026-08-31 | `05×3` | Pulse en kind |
-| 6 | 2026-09-07 | `05×2` `06×1` | **NGINX sustituido por Gateway API** |
-| 7 | 2026-09-14 | — | 🟡 **RESERVA** + repaso 30 d (mód. 00–02) |
-| 8 | 2026-09-21 | `06×3` | |
-| 9 | 2026-09-28 | `06×1` `07×2` | **Postgres con estado, drill de backup** |
-| 10 | 2026-10-05 | `07×2` `08×1` | **SLO definido, recording rule 8s → <1s** |
-| 11 | 2026-10-12 | `08×3` | |
-| 12 | 2026-10-19 | `08×2` `08b×1` | **Trazas propias, exemplars métrica→traza** |
-| 13 | 2026-10-26 | — | 🟡 **RESERVA** + repaso 30 d (mód. 05–07) |
-| 14 | 2026-11-02 | `08b×3` | **Flamegraph de un pod vivo, sin tocarlo** |
-| 15 | 2026-11-09 | `08c×2` `09×1` | 🔥 **Game Day I + postmortem** |
-| 16 | 2026-11-16 | `09×3` | **Pipeline verde con SBOM** |
-| 17 | 2026-11-23 | `10×3` | |
-| 18 | 2026-11-30 | `10×2` `11×1` | **GitOps: Argo CD gobierna el cluster** |
-| 19 | 2026-12-07 | `11×1` `12×2` | **Canary con rollback automático por SLO** |
-| 20 | 2026-12-14 | `12×3` | **Solo imágenes firmadas admitidas** |
+| 1 | 2026-08-03 | `00×1` | Entorno reproducible |
+| 2 | 2026-08-10 | `00×1` `01×2` | Harness `verify.sh` terminado |
+| 3 | 2026-08-17 | `02×3` | **Pulse tras NGINX con TLS** |
+| 4 | 2026-08-24 | `02×1` `03×2` | **Compose, imágenes distroless** |
+| 5 | 2026-08-31 | `04×2` `05×1` | **NGINX sustituido por Gateway API** |
+| 6 | 2026-09-07 | `05×3` | **NGINX sustituido por Gateway API** |
+| 7 | 2026-09-14 | `05×1` `06×2` | **Postgres con estado, drill de backup** |
+| 8 | 2026-09-21 | — | 🟡 **RESERVA** + repaso espaciado |
+| 9 | 2026-09-28 | `06×3` | **Postgres con estado, drill de backup** |
+| 10 | 2026-10-05 | `07×3` | **SLO y recording rule 8s → <1s** |
+| 11 | 2026-10-12 | `07×1` `08×2` | **Trazas propias, exemplars** |
+| 12 | 2026-10-19 | `08×3` | **Trazas propias, exemplars** |
+| 13 | 2026-10-26 | `08×1` `08b×2` | **Flamegraph de un pod vivo** |
+| 14 | 2026-11-02 | — | 🟡 **RESERVA** + repaso espaciado |
+| 15 | 2026-11-09 | `08b×2` `08c×1` | 🔥 **Game Day I + postmortem** |
+| 16 | 2026-11-16 | `08c×1` `09×2` | **Pipeline verde con SBOM** |
+| 17 | 2026-11-23 | `09×2` `10×1` | **Argo CD gobierna el cluster** |
+| 18 | 2026-11-30 | `10×3` | **Argo CD gobierna el cluster** |
+| 19 | 2026-12-07 | `10×1` `11×2` | **Canary con rollback por SLO** |
+| 20 | 2026-12-14 | `12×3` | **Solo imágenes firmadas** |
 | 21 | 2026-12-21 | — | 🎄 **RESERVA** — Navidad |
 | 22 | 2026-12-28 | — | 🎄 **RESERVA** — Navidad |
-| 23 | 2027-01-04 | `13×3` | Infra como módulos Terraform |
-| 24 | 2027-01-11 | `14×3` | |
+| 23 | 2027-01-04 | `12×2` `13×1` | Infra como módulos Terraform |
+| 24 | 2027-01-11 | `13×2` `14×1` | **Pulse en GKE, y destruido** |
 | 25 | 2027-01-18 | `14×3` | **Pulse en GKE, y destruido** |
-| 26 | 2027-01-25 | `14×1` `15×2` | Coste por 1.000 sondeos |
-| 27 | 2027-02-01 | `15×1` `16×2` | Comparativa Jenkins vs Actions |
-| 28 | 2027-02-08 | `16×3` | 🏁 **Game Day II + revisión de arquitectura** |
+| 26 | 2027-01-25 | `14×3` | **Pulse en GKE, y destruido** |
+| 27 | 2027-02-01 | `15×3` | Comparativa Jenkins vs Actions |
+| 28 | 2027-02-08 | `16×3` | 🏁 **Game Day II + arquitectura** |
+| 29 | 2027-02-15 | `16×2` | 🏁 **Game Day II + arquitectura** |
 
 Las semanas 21 y 22 son reserva por calendario, no por diseño. Si llegas
 adelantado, adelanta el módulo 14 — es el único con costo y conviene ejecutarlo
 concentrado.
 
-**Sobre la semana 15:** el Game Day I cabe entero en una sola semana, a
-propósito. El bloque suelto del módulo 09 va detrás porque el 09 depende del 03,
-no del 08, así que no hay razón para esperarlo. Un postmortem escrito dos semanas
-después del incidente es ficción, y partir el ejercicio por una semana de reserva
-garantizaría justo eso.
+**Sobre el Game Day I (jueves 12 y martes 17 de noviembre):** sus dos bloques
+caen en semanas distintas, y no importa. Los tres labs suman 120 minutos exactos
+—repaso 20 + ronda 60 + postmortem 40— así que **todo el ejercicio cabe en la
+sesión del jueves**, incluido el postmortem. El bloque del martes siguiente es
+para la remediación: implementar la comprobación que faltaba en `verify.sh` y
+verificar que caza el fallo.
+
+Lo que no se puede partir es el incidente y su postmortem. Escrito cinco días
+después es ficción — te acuerdas de la versión ordenada, no de los callejones sin
+salida, que son la parte útil.
 
 **Sobre el Game Day I:** es el cambio de diseño más importante del plan. El
 módulo de mayor valor —depurar algo que no habías visto, bajo presión— estaba
