@@ -307,9 +307,57 @@ group_gitops() {
     [ \"\$n\" -eq 0 ] || { echo \"\$n Application(s) use ignoreDifferences — each needs a documented owner\"; exit 1; }"
 }
 
+# --- group: security ----------------------------------------------------------
+# Added in module 12. Admission control is a control over what ENTERS; this
+# group is the control over what IS. You need both — a policy can be enforcing
+# while unsigned images run, because anything already inside stays inside.
+group_security() {
+  log "${DIM}== security ==${RESET}"
+  if ! have kubectl || ! kubectl cluster-info >/dev/null 2>&1; then
+    skip "workloads are signed and hardened" "no reachable cluster"
+    return
+  fi
+  local ns=${PULSE_NAMESPACE:-pulse}
+
+  check "no container runs as root" bash -c "
+    bad=\$(kubectl get pods -n '$ns' -o json \
+      | jq -r '.items[] | select((.spec.securityContext.runAsNonRoot // false) != true)
+               | .metadata.name')
+    [ -z \"\$bad\" ] || { echo \"\$bad\"; exit 1; }"
+
+  check "root filesystems are read-only" bash -c "
+    bad=\$(kubectl get pods -n '$ns' -o json \
+      | jq -r '.items[] | . as \$p | .spec.containers[]
+               | select((.securityContext.readOnlyRootFilesystem // false) != true)
+               | \"\(\$p.metadata.name)/\(.name)\"')
+    [ -z \"\$bad\" ] || { echo \"\$bad\"; exit 1; }"
+
+  check "all capabilities dropped" bash -c "
+    bad=\$(kubectl get pods -n '$ns' -o json \
+      | jq -r '.items[] | . as \$p | .spec.containers[]
+               | select((.securityContext.capabilities.drop // []) | index(\"ALL\") | not)
+               | \"\(\$p.metadata.name)/\(.name)\"')
+    [ -z \"\$bad\" ] || { echo \"\$bad\"; exit 1; }"
+
+  # State, not flow: what is actually running, regardless of what the policy says.
+  check "every running image is digest-pinned" bash -c "
+    bad=\$(kubectl get pods -n '$ns' -o jsonpath='{range .items[*]}{range .spec.containers[*]}{.image}{\"\n\"}{end}{end}' \
+      | sort -u | grep -v '@sha256:' || true)
+    [ -z \"\$bad\" ] || { echo \"not pinned: \$bad\"; exit 1; }"
+
+  if kubectl get crd policyexceptions.kyverno.io >/dev/null 2>&1; then
+    # Legitimate for hours during an incident, suspicious after a day.
+    check "no PolicyException is left active" bash -c "
+      n=\$(kubectl get policyexception -A --no-headers 2>/dev/null | wc -l)
+      [ \"\$n\" -eq 0 ] || { kubectl get policyexception -A --no-headers; exit 1; }"
+  else
+    skip "no PolicyException is left active" "Kyverno not installed"
+  fi
+}
+
 # --- registry -----------------------------------------------------------------
 # Order matters: cheap checks first so failures surface fast.
-ALL_GROUPS=(tooling build scripts nginx gateway k8s storage slo traces profiling gitops)
+ALL_GROUPS=(tooling build scripts nginx gateway k8s storage slo traces profiling gitops security)
 
 usage() {
   log "usage: $0 [group...]"

@@ -36,15 +36,15 @@ between "we run Trivy" and having a supply chain position.
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso (módulos 10–11) | CORE | 15 min |
-| 01 | Trivy (v0.72.0) against Pulse images; triage findings, separate real from noise | CORE | 45 min |
-| 02 | SBOM generation and attestation; answer a CVE question using it | CORE | 45 min |
-| 03 | Cosign (v3.1.2) signing in CI — keyless with OIDC | CORE | 50 min |
-| 04 | **Kyverno (v1.18.2) admission policy**: reject unsigned images; prove it blocks | CORE | 50 min |
-| 05 | Pod hardening: non-root, read-only rootfs, dropped capabilities, seccomp — and fix what breaks | CORE | 50 min |
-| 06 | Secrets: why base64 is not encryption, and what to use instead | CORE | 40 min |
-| 07 | Policy as code with tests — policies are code and need their own tests | EXTEND | 40 min |
-| 08 | Break-glass: how a human overrides policy during an incident, auditably | EXTEND | 35 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 09–11) | CORE | 15 min |
+| 01 | [Triage, not a wall of red](./labs/01-triage.md) — Trivy v0.72.0 and reachability | CORE | 45 min |
+| 02 | [An SBOM that travels with the image](./labs/02-sbom.md) | CORE | 45 min |
+| 03 | [Keyless signing](./labs/03-signing.md) — Cosign v3.1.2, and what a signature does not prove | CORE | 50 min |
+| 04 | [**The gate, and its opening hours**](./labs/04-admission.md) — Kyverno v1.18.2 | CORE | 50 min |
+| 05 | [Harden the pods, then fix what breaks](./labs/05-hardening.md) | CORE | 50 min |
+| 06 | [base64 is not encryption](./labs/06-secrets.md) | CORE | 40 min |
+| 07 | [Policies are code, so test them](./labs/07-policy-tests.md) | EXTEND | 40 min |
+| 08 | [Break glass](./labs/08-break-glass.md) | EXTEND | 35 min |
 
 ## Capstone layer
 
