@@ -29,15 +29,15 @@ what keeps that module inside budget.
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso (módulos 11–12) | CORE | 15 min |
-| 01 | Terraform (v1.15.8) fundamentals against a local provider; no cloud yet | CORE | 40 min |
-| 02 | A real module: variables with validation, outputs, versioned | CORE | 50 min |
-| 03 | Provision the kind cluster and Pulse's platform resources as code | CORE | 50 min |
-| 04 | Remote state and locking; deliberately create a stuck lock and recover | CORE | 45 min |
-| 05 | **Drift in two directions** on the same field | CORE | 45 min |
-| 06 | Import a hand-created resource to a clean plan | CORE | 40 min |
-| 07 | Workspaces vs directory-per-environment: implement both, argue for one | EXTEND | 45 min |
-| 08 | Policy checks on the plan JSON — assertions before apply | EXTEND | 40 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 09, 12, 03) | CORE | 15 min |
+| 01 | [Fundamentals, without touching a cloud](./labs/01-fundamentals.md) — Terraform v1.15.8 | CORE | 40 min |
+| 02 | [A module with a real interface](./labs/02-modules.md) | CORE | 50 min |
+| 03 | [The platform as code](./labs/03-provision-platform.md) — and the Terraform/Argo boundary | CORE | 50 min |
+| 04 | [Locks, and a stuck one](./labs/04-state-locking.md) | CORE | 45 min |
+| 05 | [**Drift in two directions**](./labs/05-drift.md) on the same field | CORE | 45 min |
+| 06 | [Adopt what already exists](./labs/06-import.md) | CORE | 40 min |
+| 07 | [Workspaces or directories](./labs/07-workspaces.md) | EXTEND | 45 min |
+| 08 | [Assertions on the plan, before apply](./labs/08-policy-checks.md) | EXTEND | 40 min |
 
 ## Capstone layer
 
