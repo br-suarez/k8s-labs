@@ -21,10 +21,6 @@ Jenkinsfile, operate it safely, and argue for a migration with evidence."
 That framing only works if you already know the modern alternative. You do:
 module 09. Doing Jenkins first would teach you the tool without the judgement.
 
-The same applies to Ansible, with one difference: Ansible is not legacy. It
-remains the right answer for configuring things that are not containers — VMs,
-network appliances, bare metal, and the machines that run your Kubernetes nodes.
-
 ## Objectives
 
 1. Operate Jenkins: pipelines, agents, credentials, and the failure modes of a
@@ -46,38 +42,37 @@ network appliances, bare metal, and the machines that run your Kubernetes nodes.
 
 ## Labs
 
-| # | Lab | Level | Time |
-|---|---|---|---|
 ### Jenkins — 1 block
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso (módulos 13–14) | CORE | 15 min |
-| 01 | Inherit a Jenkins: stand up a controller and an agent, then read and operate a Jenkinsfile you did not write. Find the two places its credentials leak into build logs | CORE | 55 min |
-| 02 | **The migration document**: the module 09 pipeline and this one, side by side, with real numbers — and the case for *not* migrating | CORE | 50 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 14, 13, 06, 09) | CORE | 15 min |
+| 01 | [Inherit a Jenkins](./labs/01-inherit-jenkins.md) — read and operate a pipeline you did not write | CORE | 55 min |
+| 02 | [**The migration document**](./labs/02-migration-doc.md) — including the case for staying | CORE | 50 min |
 
 ### Ansible — 2 blocks
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 03 | From zero: inventory, playbook, modules, and idempotency measured (`changed=0` on the second run, and every task that had to be rewritten to get there) | CORE | 50 min |
-| 04 | Roles, `ansible-vault`, and dynamic inventory against a real source | CORE | 50 min |
-| 05 | Provision a VM-based `pulse-worker`; `--check` must be clean and the service must report to the same `pulse-api` | CORE | 50 min |
-| 06 | Patch the Kubernetes nodes without breaking the cluster: cordon, drain, patch, uncordon — respecting the PDBs from module 06 | CORE | 50 min |
-| 07 | Ansible vs a Kubernetes operator for the same task: when does declarative config management stop being the right tool? | EXTEND | 40 min |
+| 03 | [Ansible from zero, and idempotency measured](./labs/03-ansible-zero.md) | CORE | 50 min |
+| 04 | [Roles, vault and dynamic inventory](./labs/04-roles-vault.md) | CORE | 50 min |
+| 05 | [A worker that is not a container](./labs/05-vm-worker.md) | CORE | 50 min |
+| 06 | [**Patch the cluster without breaking it**](./labs/06-patch-nodes.md) | CORE | 50 min |
+| 07 | [Push versus reconcile](./labs/07-ansible-vs-operator.md) | EXTEND | 40 min |
 
 ## Capstone layer
 
-A legacy `pulse-worker` runs on a VM, provisioned entirely by Ansible, reporting
-to the same `pulse-api`. Both CI systems build the same artifact, which is what
-makes the comparison in lab 06 evidence rather than opinion.
+A `pulse-worker` runs on a VM, provisioned entirely by Ansible, reporting to the
+same `pulse-api` and scraped by the same Prometheus. Both CI systems build the
+same artifact, which is what makes the comparison in lab 02 evidence rather than
+opinion.
 
 ## Note
 
 `archive/sre-track/28-ansible-idempotency/` already covers idempotency, including
 Ansible silently ignoring a config on a world-writable mount. If your diagnostic
-confirms it, compress labs 04–05 into one and spend the time on lab 07, which is
-the harder and more useful scenario.
+confirms it, skim lab 03 and spend the time on labs 04 and 06 — 06 is where the
+genuinely new problem lives: Ansible operating on a live cluster.
 
 ## Verification
 

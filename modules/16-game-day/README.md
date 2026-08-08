@@ -5,10 +5,10 @@
 No new technology. This module is the exam, and it is the module that produces
 the artifact you actually show people.
 
-This is the **second** Game Day. You ran one in week 14 against a six-layer
-system; this one covers all twelve. Put the two postmortems side by side when you
-finish — the change in time-to-diagnosis across fourteen weeks is the most honest
-measure of progress in this repository.
+This is the **second** Game Day. You ran one in week 15 against a seven-layer
+system; this one covers all thirteen. Put the two postmortems side by side when
+you finish — the change in time-to-diagnosis across thirteen weeks is the most
+honest measure of progress in this repository.
 
 ## Objectives
 
@@ -30,17 +30,20 @@ measure of progress in this repository.
 
 ## Format
 
-`scripts/gameday.sh` injects one failure at random from a pool spanning every
-layer:
+`scripts/gameday-2.sh` injects failures at random from a pool spanning every
+layer of the finished platform:
 
-| Layer | Example failure class |
-|---|---|
-| Infrastructure | Node pressure, disk exhaustion |
-| Kubernetes | Scheduling failure, evicted pods, stuck finalizer |
-| Networking | Gateway misroute, DNS failure, policy drop |
-| Application | Latency injection, queue saturation, dependency failure |
-| Delivery | Bad release that passes the canary gate |
-| Supply chain | Unsigned image blocked, or a policy that blocks everything |
+| Layer | Example failure class | From module |
+|---|---|---|
+| Kubernetes | Probes, scheduling, resource limits | 04, 06 |
+| Networking | Gateway route attachment, Service selectors | 05 |
+| Observability | Cardinality explosion, collector pipeline order | 07, 08 |
+| Below the application | TCP accept queue — invisible to instrumentation | 08b |
+| Delivery | Self-heal reverting a fix, canary analysis not scoped | 10, 11 |
+| Supply chain | Policy silently in Audit rather than Enforce | 12 |
+
+Unlike Game Day I, **several of these interact**: one can mask another, and the
+order you fix them changes what you can observe.
 
 Rules:
 
@@ -53,13 +56,13 @@ Rules:
 
 | # | Lab | Level | Time |
 |---|---|---|---|
-| 00 | Repaso: full-stack rebuild from empty cluster to running Pulse, timed | CORE | 60 min |
-| 01 | **A designed experiment** — hypothesis first, then break it | CORE | 55 min |
-| 02 | Game Day round 1 — three failures | CORE | 60 min |
-| 03 | Game Day round 2 — two failures, harder | CORE | 50 min |
-| 04 | Postmortems and remediation | CORE | 50 min |
-| 05 | SLO review: did the platform meet its own targets across the track? | CORE | 40 min |
-| 06 | The architecture review presentation | CORE | 45 min |
+| 00 | [Reconstrucción completa, cronometrada](./labs/00-repaso.md) | CORE | 60 min |
+| 01 | [**A designed experiment**](./labs/01-experiment.md) — hypothesis first, then break it | CORE | 55 min |
+| 02 | [Ronda 1: tres fallos sobre trece capas](./labs/02-round-1.md) | CORE | 60 min |
+| 03 | [Ronda 2: cinco fallos, sin red](./labs/03-round-2.md) | CORE | 50 min |
+| 04 | [Postmortem y remediación](./labs/04-postmortem.md) | CORE | 50 min |
+| 05 | [¿Cumplió la plataforma sus propios objetivos?](./labs/05-slo-review.md) | CORE | 40 min |
+| 06 | [**The architecture review**](./labs/06-architecture-review.md) | CORE | 45 min |
 
 ### Lab 01 — the difference between a drill and an experiment
 
@@ -96,8 +99,9 @@ The platform is complete. It:
 
 ## The deliverable
 
-`POSTMORTEM.md` per Game Day round, and a final `ARCHITECTURE.md` covering the
-whole platform with the trade-offs taken at each layer.
+`POSTMORTEM-2.md`, `EXPERIMENTS.md`, `SLO-REVIEW.md`, and a final
+`ARCHITECTURE.md` covering the whole platform with the trade-offs taken at each
+layer.
 
 That architecture document is the single most useful artifact in this repository
 for an interview. Everything before it exists to make it true.

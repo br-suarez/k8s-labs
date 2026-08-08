@@ -50,17 +50,17 @@ work. Record it in `TRACKER.md` if you take this path — the same way
 
 | # | Lab | Level | Cost | Time |
 |---|---|---|---|---|
-| 00 | Repaso (módulos 12–13) | CORE | $0 | 15 min |
-| 01 | Project, billing budget and alert, APIs enabled — **before anything else** | CORE | $0 | 40 min |
-| 02 | IAM and service accounts; least privilege from the start | CORE | $0 | 45 min |
-| 03 | VPC and GKE Autopilot via Terraform | CORE | ~$2 | 55 min |
-| 04 | Deploy Pulse via the same Argo CD config as locally; find what does not transfer | CORE | ~$3 | 55 min |
-| 05 | Workload identity — no static keys | CORE | ~$1 | 45 min |
-| 06 | **Teardown drill**: destroy, then hunt for survivors (orphaned disks, IPs, load balancers) | CORE | $0 | 40 min |
-| 07 | Cloud mapping table: GCP ↔ AWS ↔ Azure, with the analogies that break | CORE | $0 | 45 min |
-| 08 | **Unit economics**: cost per 1,000 probes, derived from your own billing export and the metrics from module 07 | CORE | $0 | 55 min |
-| 09 | **Rightsizing from evidence**: what Pulse actually uses vs what it requests, and what the gap costs annually | CORE | $0 | 50 min |
-| 10 | Cost attribution with labels; find the most expensive thing you ran | EXTEND | $0 | 35 min |
+| 00 | [Repaso](./labs/00-repaso.md) (módulos 12–13, 06) | CORE | $0 | 15 min |
+| 01 | [**The budget, before anything else**](./labs/01-budget-first.md) | CORE | $0 | 40 min |
+| 02 | [Least privilege from the start](./labs/02-iam.md) | CORE | $0 | 45 min |
+| 03 | [VPC and GKE](./labs/03-gke.md), from the module you already wrote | CORE | ~$2 | 55 min |
+| 04 | [Same GitOps, different cluster](./labs/04-deploy.md) — find what leaks | CORE | ~$3 | 55 min |
+| 05 | [No keys, anywhere](./labs/05-workload-identity.md) | CORE | ~$1 | 45 min |
+| 06 | [**Hunt the survivors**](./labs/06-teardown.md) | CORE | $0 | 40 min |
+| 07 | [The other two clouds, honestly](./labs/07-cloud-mapping.md) | CORE | $0 | 45 min |
+| 08 | [**Cost per 1,000 probes**](./labs/08-unit-economics.md) | CORE | $0 | 55 min |
+| 09 | [What you reserved versus what you use](./labs/09-rightsizing.md) | CORE | $0 | 50 min |
+| 10 | [Who spent it?](./labs/10-attribution.md) | EXTEND | $0 | 35 min |
 
 ### On labs 08 and 09 — cost as a reliability concern
 

@@ -1,0 +1,70 @@
+// Inherited pipeline. Nobody on the current team wrote this.
+// Lab 15.01 asks you to read it before changing anything.
+//
+// There are two ways this exposes a secret in the build log. Find both.
+
+pipeline {
+    agent { label 'build-01' }
+
+    environment {
+        REGISTRY   = 'ghcr.io/example'
+        DEPLOY_KEY = credentials('prod-deploy-token')
+        GO_VERSION = '1.21'
+    }
+
+    triggers {
+        pollSCM('H/5 * * * *')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh '''
+                    export PATH=/opt/go-1.21/bin:$PATH
+                    cd /var/lib/jenkins/workspace/pulse-build/services/pulse-api
+                    go build -o /tmp/pulse-api .
+                '''
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'cd services/pulse-api && go test ./...'
+            }
+        }
+
+        stage('Push') {
+            steps {
+                sh """
+                    docker build -t ${REGISTRY}/pulse-api:latest services/pulse-api
+                    docker login ghcr.io -u bot -p ${DEPLOY_KEY}
+                    docker push ${REGISTRY}/pulse-api:latest
+                """
+            }
+        }
+
+        stage('Deploy') {
+            when { branch 'main' }
+            steps {
+                sh '''
+                    set -x
+                    curl -sS -H "Authorization: Bearer $DEPLOY_KEY" \
+                      -X POST https://deploy.example.com/api/v1/release \
+                      -d '{"service":"pulse-api","tag":"latest"}'
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Build ${currentBuild.result}"
+        }
+    }
+}
